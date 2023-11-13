@@ -1,4 +1,4 @@
-import 'package:b2/views/screen/home_screen.dart';
+import 'package:cash_heart/views/screen/home_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
