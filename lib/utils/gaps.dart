@@ -1,4 +1,4 @@
-import 'package:cashheart/util/sizes.dart';
+import 'package:cashheart/utils/sizes.dart';
 import 'package:flutter/material.dart';
 
 class Gaps {
