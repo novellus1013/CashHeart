@@ -4,18 +4,21 @@ class UserModel {
   final String username;
   final DateTime createdAt;
 
-  UserModel(
-    this.id,
-    this.email,
-    this.username,
-    this.createdAt,
-  );
+  UserModel({
+    required this.id,
+    required this.email,
+    required this.username,
+    required this.createdAt,
+  });
 
-  UserModel.fromJson(Map<String, dynamic> json)
-      : id = json['id'],
-        email = json['email'],
-        username = json['username'],
-        createdAt = DateTime.parse(json['createdAt']);
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'],
+      email: json['email'],
+      username: json['username'],
+      createdAt: DateTime.parse(json['created_at']),
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
