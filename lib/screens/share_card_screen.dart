@@ -1,6 +1,7 @@
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/utils/event_message_handler.dart';
+import 'package:cash_heart/utils/money_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -19,6 +20,7 @@ class ShareCardScreen extends StatelessWidget {
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _ShareCard(others: others, amount: amount),
             Gaps.v40,
@@ -46,8 +48,7 @@ class _ShareCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: Sizes.size24,
-        vertical: Sizes.size16,
+        vertical: Sizes.size28,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -64,36 +65,30 @@ class _ShareCard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            "To: $others에게",
+            "💌 To: $others",
             style: const TextStyle(
-              fontSize: Sizes.size20,
+              fontSize: Sizes.size16,
             ),
           ),
-          Gaps.v20,
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                FontAwesomeIcons.wonSign,
-                size: Sizes.size28,
-                color: Colors.red,
-              ),
-              Gaps.h10,
-              Text(
-                "$amount",
-                style: const TextStyle(
-                  fontSize: Sizes.size32,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.red,
-                ),
-              ),
-            ],
+          Gaps.v16,
+          Text(
+            MoneyFormatter.formatCurrency(amount, 'ko_KR', '₩'),
+            style: const TextStyle(
+              fontSize: Sizes.size40,
+              fontWeight: FontWeight.w500,
+              color: Colors.red,
+            ),
           ),
           Gaps.v10,
-          Text(messages),
+          Text(
+            messages,
+            style: const TextStyle(
+              fontStyle: FontStyle.italic,
+            ),
+          ),
           Gaps.v10,
           const Text(
-            "Cash heart",
+            "CashHeart",
             style: TextStyle(color: Colors.grey),
           )
         ],
