@@ -27,7 +27,7 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: const Color(0xffFF6258),
         shape: const CircleBorder(),
         onPressed: () {
-          Navigator.of(context).pushNamed('/add');
+          Navigator.of(context).pushNamed('/share');
         },
         child: const Icon(
           Icons.add,

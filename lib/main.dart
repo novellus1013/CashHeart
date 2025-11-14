@@ -1,3 +1,4 @@
+import 'package:cash_heart/constants/colors.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/screens/add_gift_screen.dart';
 import 'package:cash_heart/screens/home_screen.dart';
@@ -34,6 +35,9 @@ void main() {
             fontSize: Sizes.size28,
             color: Colors.black,
           ),
-        )),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor, foregroundColor: Colors.white))),
   ));
 }
