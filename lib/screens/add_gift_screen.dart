@@ -1,4 +1,3 @@
-import 'package:cash_heart/constants/colors.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:flutter/material.dart';
@@ -6,22 +5,23 @@ import 'package:flutter/material.dart';
 class AddGiftScreen extends StatelessWidget {
   const AddGiftScreen({super.key});
 
+  void _saveAndPush() {
+    print("저장됨");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
           title: const Text('기록 추가'),
           actions: [
-            TextButton(
-              onPressed: () {
-                print("저장됨");
-              },
+            ElevatedButton(
+              onPressed: _saveAndPush,
               child: const Text(
-                '저 장',
+                'save',
                 style: TextStyle(
-                  fontSize: Sizes.size20,
-                  color: primaryColor,
-                  fontWeight: FontWeight.w700,
+                  fontSize: Sizes.size18,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),

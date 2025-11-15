@@ -1,6 +1,7 @@
 // 경조사비 금액 구간별 메시지 리스트 (단위: 만원)
 import 'package:cash_heart/utils/event_message_data.dart';
 
+//이벤트 메시지를 정의한 EventMessageData에 맞는 실물 데이터들 List
 const List<EventMessageData> eventMessagesKo = [
   // 1. amount <= -100만
   EventMessageData(

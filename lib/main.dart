@@ -18,26 +18,30 @@ void main() {
       "/setting": (context) => const SettingScreen(),
     },
     theme: ThemeData(
-        fontFamily: "pretendard",
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xffFF6258),
+      fontFamily: "pretendard",
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xffFF6258),
+      ),
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(fontWeight: FontWeight.w700),
+        displayMedium: TextStyle(
+          fontWeight: FontWeight.w500,
         ),
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(fontWeight: FontWeight.w700),
-          displayMedium: TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
+      ),
+      appBarTheme: const AppBarTheme(
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: Sizes.size28,
+          color: Colors.black,
         ),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          titleTextStyle: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: Sizes.size28,
-            color: Colors.black,
-          ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor, foregroundColor: Colors.white))),
+      ),
+    ),
   ));
 }

@@ -5,6 +5,7 @@ import 'package:cash_heart/utils/event_message_ko.dart';
 
 final Random _random = Random();
 
+//parameter를 받고, 조건에 따라 random message를 출력하기 위한 함수 정의
 String getRandomEventMessage(int amount) {
   final int amountInManwon = amount ~/ 10000;
 
