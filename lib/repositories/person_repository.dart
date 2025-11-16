@@ -7,7 +7,7 @@ import 'package:sqflite/sqflite.dart';
 class PersonRepository {
   //싱글턴인 이유 : 여러개의 인스턴스를 만들 필요 없는 일종의 함수 모음 이기 때문에
   PersonRepository._internal();
-  final PersonRepository instance = PersonRepository._internal();
+  static final PersonRepository instance = PersonRepository._internal();
 
   // getter에서 await AppDatabase.instance.database를 안쓰고 Future<Database>를 반환받는 이유
   // 메서드들에서 어차피 Future를 사용하기 때문에

@@ -39,7 +39,7 @@ class GiftRepository {
     );
   }
 
-  Future<List<Gift>> getGiftsByPersonId(int personId) async {
+  Future<List<Gift>> getGiftsListByPersonId(int personId) async {
     final db = await _db;
     final result = await db.query(
       'gifts',
