@@ -2,7 +2,6 @@ import 'package:cash_heart/constants/colors.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
-import 'package:cash_heart/screens/add_gift_screen.dart';
 import 'package:cash_heart/screens/home_screen.dart';
 import 'package:cash_heart/screens/person_detail_screen.dart';
 import 'package:cash_heart/screens/setting_screen.dart';
@@ -38,7 +37,6 @@ class MyApp extends StatelessWidget {
         initialRoute: '/',
         routes: {
           "/": (context) => const HomeScreen(),
-          "/add": (context) => const AddGiftScreen(),
           "/detail": (context) => const PersonDetailScreen(),
           "/share": (context) => const ShareCardScreen(),
           "/setting": (context) => const SettingScreen(),
@@ -58,10 +56,15 @@ class MyApp extends StatelessWidget {
             centerTitle: true,
             titleTextStyle: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: Sizes.size28,
+              fontSize: Sizes.size24,
               color: Colors.black,
             ),
           ),
+          inputDecorationTheme: InputDecorationTheme(
+              hintStyle: TextStyle(
+            fontSize: Sizes.size14,
+            color: Colors.grey,
+          )),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryColor,

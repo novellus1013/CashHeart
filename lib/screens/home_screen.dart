@@ -1,3 +1,4 @@
+import 'package:cash_heart/screens/add_edit_person_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -5,6 +6,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selectedPersonId;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -14,7 +17,7 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(context).pushNamed('/share');
+              Navigator.of(context).pushNamed('/setting');
             },
             icon: const Icon(
               Icons.settings,
@@ -27,7 +30,9 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: const Color(0xffFF6258),
         shape: const CircleBorder(),
         onPressed: () {
-          Navigator.of(context).pushNamed('/add');
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => AddEditPersonScreen(),
+          ));
         },
         child: const Icon(
           Icons.add,
@@ -37,7 +42,7 @@ class HomeScreen extends StatelessWidget {
       ),
       body: const Column(children: [
         Text(
-          'homaasdfsdabafdbdfadfsdafe',
+          'home_screen',
           style: TextStyle(
             fontSize: 50,
             fontWeight: FontWeight.w700,

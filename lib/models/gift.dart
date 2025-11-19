@@ -7,8 +7,8 @@ class Gift {
   String direction; //enum -> String 저장
   String category; //enum -> String 저장
   int date;
-  String memo;
-  int createdAt;
+  String? note;
+  int? createdAt;
 
   //String으로 변환된 direction을 가져와 Enum으로 변경해준는 getter
   GiftDirection get directionEnum {
@@ -27,8 +27,8 @@ class Gift {
     required this.direction,
     required this.category,
     required this.date,
-    required this.memo,
-    required this.createdAt,
+    this.note,
+    this.createdAt,
   });
 
   factory Gift.fromMap(Map<String, dynamic> map) {
@@ -39,7 +39,7 @@ class Gift {
       direction: map['direction'],
       category: map['category'],
       date: map['date'],
-      memo: map['memo'],
+      note: map['note'],
       createdAt: map['created_at'],
     );
   }
@@ -52,7 +52,7 @@ class Gift {
       'direction': direction,
       'category': category,
       'date': date,
-      'memo': memo,
+      'memo': note,
       'created_at': createdAt,
     };
   }

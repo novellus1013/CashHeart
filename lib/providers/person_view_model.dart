@@ -32,9 +32,11 @@ class PersonViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> addPerson(Person person) async {
-    await _repository.insertPerson(person);
+  Future<int> addPerson(Person person) async {
+    final personId = await _repository.insertPerson(person);
     await loadPersons();
+
+    return personId;
   }
 
   Future<void> updatePerson(Person person) async {

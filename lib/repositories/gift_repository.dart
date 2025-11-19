@@ -10,9 +10,14 @@ class GiftRepository {
 
   Future<int> insertGift(Gift gift) async {
     final db = await _db;
+
+    final data = gift.toMap();
+
+    data['created_at'] = DateTime.now().millisecondsSinceEpoch;
+
     return await db.insert(
       'gifts',
-      gift.toMap(),
+      data,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }

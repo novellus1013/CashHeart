@@ -18,9 +18,14 @@ class PersonRepository {
   // db.insert는 삽입된 row의 id를 반환
   Future<int> insertPerson(Person person) async {
     final db = await _db;
+
+    final data = person.toMap();
+
+    data['created_at'] = DateTime.now().millisecondsSinceEpoch;
+
     return await db.insert(
       'persons',
-      person.toMap(),
+      data,
       conflictAlgorithm: ConflictAlgorithm.replace, // !definition 살펴보기
     );
   }
