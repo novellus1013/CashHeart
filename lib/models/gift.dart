@@ -4,21 +4,13 @@ class Gift {
   int? id;
   int personId;
   int amount;
-  String direction; //enum -> String 저장
-  String category; //enum -> String 저장
+
+  GiftDirection direction; //enum -> String 저장 -> int로 변경 -> enum으로
+  GiftCategory category; //enum -> String 저장
+
   int date;
   String? note;
   int? createdAt;
-
-  //String으로 변환된 direction을 가져와 Enum으로 변경해준는 getter
-  GiftDirection get directionEnum {
-    // ~.values.byName(String) -> enum type이 제공해주는 메서드
-    return GiftDirection.values.byName(direction);
-  }
-
-  GiftCategory get categoryEnum {
-    return GiftCategory.values.byName(category);
-  }
 
   Gift({
     this.id,
@@ -31,13 +23,18 @@ class Gift {
     this.createdAt,
   });
 
+  int get signedAmount => amount * direction.dbValue;
+
+  String get directionLabel => direction.label;
+  String get categoryLabel => category.label;
+
   factory Gift.fromMap(Map<String, dynamic> map) {
     return Gift(
       id: map['id'],
       personId: map['person_id'],
       amount: map['amount'],
-      direction: map['direction'],
-      category: map['category'],
+      direction: GiftDirectionDb.fromDb(map['direction']),
+      category: GiftCategoryDb.fromDb(map['category']),
       date: map['date'],
       note: map['note'],
       createdAt: map['created_at'],
@@ -49,10 +46,10 @@ class Gift {
       'id': id,
       'person_id': personId,
       'amount': amount,
-      'direction': direction,
-      'category': category,
+      'direction': direction.dbValue,
+      'category': category.dbValue,
       'date': date,
-      'memo': note,
+      'note': note,
       'created_at': createdAt,
     };
   }

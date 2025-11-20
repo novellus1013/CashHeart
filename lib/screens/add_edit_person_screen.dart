@@ -20,7 +20,7 @@ class AddEditPersonScreen extends StatefulWidget {
 }
 
 class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
-  bool get isEdit => widget.personId != null;
+  bool get _isEdit => widget.personId != null;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -37,7 +37,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
 
     if (_initialized) return;
 
-    if (isEdit) {
+    if (_isEdit) {
       final vm = context.read<PersonViewModel>();
       final existing = vm.getPersonById(widget.personId!);
       if (existing != null) {
@@ -54,23 +54,23 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
     //!false = true를 이용해 db에 잘못된 값 삽입 방지
     if (!_formKey.currentState!.validate()) return;
 
-    final _vm = context.read<PersonViewModel>();
+    final vm = context.read<PersonViewModel>();
     //trim()은 문자열 앞과 뒤의 공백 제거
     final name = _personNameController.text.trim();
     final note = _personNoteController.text.trim().isEmpty
         ? null
         : _personNoteController.text.trim();
 
-    final _person = Person(
-      id: isEdit ? widget.personId : null,
+    final person = Person(
+      id: _isEdit ? widget.personId : null,
       name: name,
       note: note,
     );
 
-    if (isEdit) {
-      await _vm.updatePerson(_person);
+    if (_isEdit) {
+      await vm.updatePerson(person);
     } else {
-      await _vm.addPerson(_person);
+      await vm.addPerson(person);
     }
 
     //mounted는 화면이 살아있는지 확인할 수 있는 State class의 내장 함수
@@ -89,18 +89,20 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
 
         final shouldPop = await showWarningPopDialog(context);
 
+        if (!mounted) return;
+
         if (shouldPop == true) {
           Navigator.of(context).pop();
         }
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(isEdit ? '지인 수정하기' : '지인 추가하기'),
+          title: Text(_isEdit ? '지인 수정하기' : '지인 추가하기'),
           actions: [
             ElevatedButton(
               onPressed: _onSave,
               child: Text(
-                isEdit ? '수 정' : '저 장',
+                _isEdit ? '수 정' : '저 장',
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                 ),
@@ -119,7 +121,6 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
             },
             child: Form(
               key: _formKey,
-              canPop: false,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

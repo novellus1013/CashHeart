@@ -15,7 +15,7 @@ enum GiftCategory {
   etc, // 기타
 }
 
-//extension을 쓰는 이유 - enum은 enum 내
+//ui용 label 생성
 extension GiftDirectionLabels on GiftDirection {
   String get label {
     if (this == GiftDirection.given) {
@@ -48,5 +48,26 @@ extension GiftCategoryLabel on GiftCategory {
       case GiftCategory.etc:
         return '기타';
     }
+  }
+}
+
+// db 계산용
+extension GiftDirectionDb on GiftDirection {
+  int get dbValue => this == GiftDirection.received ? 1 : -1;
+
+  static GiftDirection fromDb(int value) {
+    if (value == 1) {
+      return GiftDirection.received;
+    } else {
+      return GiftDirection.given;
+    }
+  }
+}
+
+extension GiftCategoryDb on GiftCategory {
+  String get dbValue => name;
+
+  static GiftCategory fromDb(String value) {
+    return GiftCategory.values.byName(value);
   }
 }

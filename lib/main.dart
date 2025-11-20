@@ -3,13 +3,12 @@ import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
 import 'package:cash_heart/screens/home_screen.dart';
-import 'package:cash_heart/screens/person_detail_screen.dart';
 import 'package:cash_heart/screens/setting_screen.dart';
 import 'package:cash_heart/screens/share_card_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
   runApp(const MyApp());
 }
 
@@ -37,7 +36,6 @@ class MyApp extends StatelessWidget {
         initialRoute: '/',
         routes: {
           "/": (context) => const HomeScreen(),
-          "/detail": (context) => const PersonDetailScreen(),
           "/share": (context) => const ShareCardScreen(),
           "/setting": (context) => const SettingScreen(),
         },
@@ -56,7 +54,7 @@ class MyApp extends StatelessWidget {
             centerTitle: true,
             titleTextStyle: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: Sizes.size24,
+              fontSize: Sizes.size20,
               color: Colors.black,
             ),
           ),

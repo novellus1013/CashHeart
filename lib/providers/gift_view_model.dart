@@ -1,4 +1,5 @@
 import 'package:cash_heart/models/gift.dart';
+import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:flutter/material.dart';
 
@@ -14,7 +15,7 @@ class GiftViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  Future<void> _loadGifts() async {
+  Future<void> loadGifts() async {
     _isLoading = true;
     notifyListeners();
 
@@ -34,16 +35,33 @@ class GiftViewModel extends ChangeNotifier {
 
   Future<void> addGift(Gift gift) async {
     await _giftRepository.insertGift(gift);
-    await _loadGifts();
+    await loadGifts();
   }
 
   Future<void> updateGift(Gift gift) async {
     await _giftRepository.updateGift(gift);
-    await _loadGifts();
+    await loadGifts();
   }
 
   Future<void> deleteGift(int giftId) async {
     await _giftRepository.deleteGift(giftId);
-    await _loadGifts();
+    await loadGifts();
+  }
+
+  //filter 및 ui 반영을 위한 getter 정의
+  int get totalAmount {
+    return _gifts.fold(0, (previous, g) => previous + g.signedAmount);
+  }
+
+  int get totalReceived {
+    return _gifts
+        .where((g) => g.direction == GiftDirection.received)
+        .fold(0, (previous, g) => previous + g.amount);
+  }
+
+  int get totalGiven {
+    return _gifts
+        .where((g) => g.direction == GiftDirection.given)
+        .fold(0, (previous, g) => previous + g.amount);
   }
 }

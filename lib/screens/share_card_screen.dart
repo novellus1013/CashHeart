@@ -38,7 +38,6 @@ class _ShareCard extends StatelessWidget {
   final int amount;
 
   const _ShareCard({
-    super.key,
     required this.others,
     required this.amount,
   });
@@ -99,9 +98,7 @@ class _ShareCard extends StatelessWidget {
 }
 
 class _ShareButton extends StatelessWidget {
-  const _ShareButton({
-    super.key,
-  });
+  const _ShareButton();
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +110,7 @@ class _ShareButton extends StatelessWidget {
         ),
       ),
       onPressed: () {
-        print("이것은 공유창");
+        debugPrint("이것은 공유창");
       },
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,

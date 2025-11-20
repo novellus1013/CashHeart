@@ -6,12 +6,12 @@ class CustomTextFormField extends StatelessWidget {
   final String hintText;
   final FormFieldValidator<String?> validator;
 
-  TextInputType? keyboardType;
-  int? maxLines;
-  int? maxLength;
-  String? suffix;
+  final TextInputType? keyboardType;
+  final int? maxLines;
+  final int? maxLength;
+  final String? suffix;
 
-  CustomTextFormField({
+  const CustomTextFormField({
     super.key,
     required this.controller,
     required this.hintText,
@@ -47,22 +47,3 @@ class CustomTextFormField extends StatelessWidget {
     );
   }
 }
-
-
-// (value) {
-//         if (value == null || value.isEmpty) {
-//           return '금액을 입력해주세요.';
-//         }
-
-//         final number = int.tryParse(value);
-
-//         if (number == null) {
-//           return '올바른 숫자를 입력해주세요.';
-//         }
-
-//         if (number <= 0) {
-//           return '금액은 0보다 커야 합니다.';
-//         }
-
-//         return null;
-//       },

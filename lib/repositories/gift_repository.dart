@@ -55,6 +55,18 @@ class GiftRepository {
 
     return result.map((row) => Gift.fromMap(row)).toList();
   }
+}
+
+
+
+
+
+  // Future<int> getReceivedTotalForPerson(int personId) async {
+  //   final db = await _db;
+  //   final result = await db.rawQuery(
+
+  //   )
+  // }
 
   // Future<List<Gift>> getAllGifts() async {
   //   final db = await _db;
@@ -65,4 +77,3 @@ class GiftRepository {
 
   //   return result.map((row) => Gift.fromMap(row)).toList();
   // }
-}
