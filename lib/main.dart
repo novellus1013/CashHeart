@@ -33,16 +33,13 @@ class MyApp extends StatelessWidget {
         // ),
       ],
       child: MaterialApp(
-        initialRoute: '/',
-        routes: {
-          "/": (context) => const HomeScreen(),
-          "/share": (context) => const ShareCardScreen(),
-          "/setting": (context) => const SettingScreen(),
-        },
+        home: HomeScreen(),
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
+          scaffoldBackgroundColor: Colors.white,
           fontFamily: "pretendard",
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xffFF6258),
+            seedColor: Colors.white,
           ),
           textTheme: const TextTheme(
             displayLarge: TextStyle(fontWeight: FontWeight.w700),
@@ -51,7 +48,10 @@ class MyApp extends StatelessWidget {
             ),
           ),
           appBarTheme: const AppBarTheme(
-            centerTitle: true,
+            centerTitle: false,
+            backgroundColor: Colors.white,
+            scrolledUnderElevation: 0,
+            elevation: 0,
             titleTextStyle: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: Sizes.size20,

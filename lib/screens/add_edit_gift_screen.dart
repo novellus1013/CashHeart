@@ -59,7 +59,7 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
         _currentCategory = existing.category;
         //timestamp(ms)를 DateTime로
         _selectedDate = DateTime.fromMillisecondsSinceEpoch(existing.date);
-        _giftNoteController.text = existing.note ?? '';
+        _giftNoteController.text = existing.note;
       }
     }
 
@@ -77,9 +77,7 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
     final amount = int.parse(_amountController.text.trim());
     final category = _currentCategory;
     final date = _selectedDate ?? DateTime.now();
-    final note = _giftNoteController.text.trim().isEmpty
-        ? null
-        : _giftNoteController.text.trim();
+    final note = _giftNoteController.text.trim();
 
     final gift = Gift(
       id: _isEdit ? widget.giftId : null,
@@ -304,25 +302,24 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
                       ],
                     ),
                     Gaps.v10,
-                    Text('메모 (선택)'),
+                    Text('거래 내역'),
                     Gaps.v10,
                     TextFormField(
                       controller: _giftNoteController,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
-                      maxLines: 3,
-                      maxLength: 50,
+                      maxLines: 1,
+                      maxLength: 20,
                       decoration: InputDecoration(
-                        hintText:
-                            "용도 및 상세 내용 (예: 돌 잔치 축하, (지인) 어머니 팔순 등) (50자 이하)",
+                        hintText: "ex) 돌 잔치 축하, (지인) 어머니 팔순 등 (20자 이하)",
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return null;
+                          return '거래 내역을 작성해주세요!';
                         }
 
-                        if (value.length >= 50) {
-                          return '메모는 50자 이하여야 합니다.';
+                        if (value.length > 20) {
+                          return '거래 내역은 20자 이하여야 합니다.';
                         }
 
                         return null;

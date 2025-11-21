@@ -7,6 +7,7 @@ import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:cash_heart/screens/add_edit_person_screen.dart';
 import 'package:cash_heart/screens/person_detail_screen.dart';
+import 'package:cash_heart/screens/setting_screen.dart';
 import 'package:cash_heart/utils/event_message_handler.dart';
 import 'package:cash_heart/utils/money_formatter.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +33,11 @@ class HomeScreen extends StatelessWidget {
           actions: [
             IconButton(
               onPressed: () {
-                Navigator.of(context).pushNamed('/share');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => SettingScreen(),
+                  ),
+                );
               },
               icon: const Icon(
                 Icons.settings,
@@ -76,7 +81,9 @@ class HomeScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                           horizontal: Sizes.size10,
                         ),
-                        child: _PesronBox(person: person),
+                        child: _PesronBox(
+                          person: person,
+                        ),
                       );
                     },
                   ),
@@ -132,6 +139,7 @@ class _PesronBox extends StatelessWidget {
           padding: EdgeInsetsGeometry.all(
             Sizes.size40,
           ),
+          //TODO: A RenderFlex overflowed by 14 pixels on the bottom.
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -145,7 +153,7 @@ class _PesronBox extends StatelessWidget {
               ),
               Gaps.v8,
               Text(
-                person.note ?? "(설명을 추가해 주세요)",
+                person.note ?? " ",
                 style: TextStyle(
                   fontSize: Sizes.size16,
                   color: Theme.of(context)

@@ -64,4 +64,12 @@ class GiftViewModel extends ChangeNotifier {
         .where((g) => g.direction == GiftDirection.given)
         .fold(0, (previous, g) => previous + g.amount);
   }
+
+  List<Gift> get giftReceivedList {
+    return _gifts.where((g) => g.direction == GiftDirection.received).toList();
+  }
+
+  List<Gift> get giftGivenList {
+    return _gifts.where((g) => g.direction == GiftDirection.given).toList();
+  }
 }

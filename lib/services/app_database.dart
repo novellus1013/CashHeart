@@ -43,7 +43,7 @@ class AppDatabase {
       CREATE TABLE persons (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        note TEXT NOT NULL,
+        note TEXT,
         created_at INTEGER NOT NULL
       );
     ''');
@@ -55,10 +55,10 @@ class AppDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         person_id INTEGER NOT NULL,
         amount INTEGER NOT NULL,
-        direction TEXT NOT NULL,
+        direction INTEGER NOT NULL,
         category TEXT NOT NULL,
         date INTEGER NOT NULL,
-        memo TEXT NOT NULL,
+        note TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         FOREIGN KEY (person_id) REFERENCES persons (id) 
       );

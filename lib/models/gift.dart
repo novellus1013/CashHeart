@@ -5,11 +5,11 @@ class Gift {
   int personId;
   int amount;
 
-  GiftDirection direction; //enum -> String 저장 -> int로 변경 -> enum으로
-  GiftCategory category; //enum -> String 저장
+  GiftDirection direction; //model에서는 enum. db에는 int로 저장.
+  GiftCategory category; //model에서는 enum. db에는 String으로 저장.
 
   int date;
-  String? note;
+  String note;
   int? createdAt;
 
   Gift({
@@ -19,7 +19,7 @@ class Gift {
     required this.direction,
     required this.category,
     required this.date,
-    this.note,
+    required this.note,
     this.createdAt,
   });
 

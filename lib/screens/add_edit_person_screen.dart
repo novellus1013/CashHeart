@@ -158,8 +158,8 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                         return null;
                       }
 
-                      if (value.length >= 50) {
-                        return '메모는 50자 미만이어야 합니다.';
+                      if (value.length > 20) {
+                        return '메모는 20자 이하여야 합니다.';
                       }
 
                       return null;
