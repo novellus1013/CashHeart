@@ -25,97 +25,156 @@ class HomeScreen extends StatelessWidget {
     final PageController pageController = PageController();
 
     return Scaffold(
-        appBar: AppBar(
-          centerTitle: false,
-          title: const Text(
-            'CashHeart',
-          ),
-          actions: [
-            IconButton(
+      appBar: AppBar(
+        centerTitle: false,
+        title: const Text(
+          'CashHeart',
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SettingScreen(),
+                ),
+              );
+            },
+            icon: const Icon(
+              Icons.settings,
+              size: 28.0,
+            ),
+          )
+        ],
+      ),
+      floatingActionButton: personList.isEmpty
+          ? null
+          : FloatingActionButton(
+              backgroundColor: const Color(0xffFF6258),
+              shape: const CircleBorder(),
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => SettingScreen(),
-                  ),
-                );
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => AddEditPersonScreen(),
+                ));
               },
-              icon: const Icon(
-                Icons.settings,
+              child: const Icon(
+                Icons.add,
                 size: 28.0,
+                color: Colors.white,
               ),
-            )
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: const Color(0xffFF6258),
-          shape: const CircleBorder(),
-          onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => AddEditPersonScreen(),
-            ));
-          },
-          child: const Icon(
-            Icons.add,
-            size: 28.0,
-            color: Colors.white,
-          ),
-        ),
-        body: Padding(
-          padding: EdgeInsets.symmetric(vertical: Sizes.size40),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height / 2,
-            child: personList.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Sizes.size10,
-                    ),
-                    child: _EmptyPersonBox(), // 데이터가 없을 때 표시할 화면
-                  )
-                : PageView.builder(
-                    controller: pageController,
-                    itemCount: personList.length,
-                    itemBuilder: (context, index) {
-                      final person = personList[index];
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: Sizes.size10,
-                        ),
-                        child: _PesronBox(
-                          person: person,
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ));
+            ),
+      body: personList.isEmpty
+          ? _EmptyPersonBox()
+          : _PersonPageView(
+              personList: personList, pageController: pageController),
+    );
   }
 }
 
-class _PesronBox extends StatelessWidget {
-  final Person person;
+class _PersonPageView extends StatefulWidget {
+  final List<Person> personList;
+  final PageController pageController;
 
-  const _PesronBox({
-    required this.person,
+  const _PersonPageView({
+    super.key,
+    required this.personList,
+    required this.pageController,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final int fakeAmount = 200000;
+  State<_PersonPageView> createState() => _PersonPageViewState();
+}
 
-    Color amountColor;
+class _PersonPageViewState extends State<_PersonPageView> {
+  late PageController _pageController;
+  // 애니메이션 계산용 -> opacitry, scale 값이 double이라서
+  double _currentPageValue = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    // viewportFraction: 0.8 -> 양옆의 카드가 살짝 보이게 하기
+    _pageController = PageController(viewportFraction: 0.8);
+    _pageController.addListener(() {
+      setState(() {
+        _currentPageValue = _pageController.page!;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Gaps.v20,
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.personList.length,
+            itemBuilder: (context, index) {
+              //현재 페이지 vs 양 옆 카드
+              double value = (index - _currentPageValue).abs();
+
+              // 현재 페이지 크기 1.0 양 옆 페이지 크기 0.9
+              double scale = 1.0 - (value * 0.1);
+
+              // 현재 페이지 선명 양 옆 페이지 조금 흐림
+              double opacity = 1.0 - (value * 0.3);
+
+              return Transform.scale(
+                scale: scale,
+                child: Opacity(
+                  opacity: opacity,
+                  child: Padding(
+                    //FAB 잘 보이게 하려는 용도
+                    padding: const EdgeInsets.only(
+                      bottom: Sizes.size56 + Sizes.size56,
+                    ),
+                    child: _PersonBox(person: widget.personList[index]),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PersonBox extends StatelessWidget {
+  final Person person;
+
+  const _PersonBox({super.key, required this.person});
+
+  @override
+  Widget build(BuildContext context) {
+    //TODO: 나중에 totalAmount로 변경
+    final int fakeAmount = 200000;
 
     final randomEventMessage = getRandomEventMessage(fakeAmount);
 
     final totalFormat = MoneyFormatter.formatCurrency(fakeAmount, 'ko_KR', '₩');
 
-    if (fakeAmount > 100000) {
-      amountColor = primaryColor;
-    } else if (fakeAmount < -100000) {
-      amountColor = cashBlueColor;
-    } else {
-      amountColor = Colors.grey;
-    }
+    //TODO: person의 totalAmount를 기준으로 isReceived 정의
+    final bool isGiven = false;
+
+    final Gradient backgroundGradient = isGiven
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [cashBlueColor, Color(0xFF36D1DC)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [primaryColor, Color(0xFFFB9F35)],
+          );
 
     return GestureDetector(
       onTap: () {
@@ -130,81 +189,208 @@ class _PesronBox extends StatelessWidget {
           ),
         );
       },
-      child: Card(
-        elevation: Sizes.size8,
-        shape: RoundedRectangleBorder(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: backgroundGradient,
           borderRadius: BorderRadius.circular(Sizes.size32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey,
+              blurRadius: Sizes.size16,
+              offset: const Offset(
+                Sizes.size32,
+                Sizes.size32,
+              ),
+            ),
+          ],
         ),
-        child: Padding(
-          padding: EdgeInsetsGeometry.all(
-            Sizes.size40,
-          ),
-          //TODO: A RenderFlex overflowed by 14 pixels on the bottom.
-          child: Column(
+        child: Stack(
+          children: [
+            //카드 메인
+            _Content(
+                person: person,
+                isGiven: isGiven,
+                totalFormat: totalFormat,
+                randomEventMessage: randomEventMessage),
+            // edit 버튼용 ui
+            _EditButton(person: person),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Content extends StatelessWidget {
+  const _Content({
+    super.key,
+    required this.person,
+    required this.isGiven,
+    required this.totalFormat,
+    required this.randomEventMessage,
+  });
+
+  final Person person;
+  final bool isGiven;
+  final String totalFormat;
+  final String randomEventMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(Sizes.size28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 person.name,
-                style: TextStyle(
+                style: const TextStyle(
+                  color: Colors.white,
                   fontSize: Sizes.size32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black, // 강조 색상
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              Gaps.v8,
-              Text(
-                person.note ?? " ",
-                style: TextStyle(
-                  fontSize: Sizes.size16,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.7),
+              Gaps.v10,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Sizes.size10,
+                  vertical: Sizes.size4,
                 ),
-              ),
-              Gaps.v32,
-              Center(
-                child: Text(
-                  totalFormat,
-                  style: TextStyle(
-                    fontSize: Sizes.size40,
-                    fontWeight: FontWeight.w900, // 가장 굵게
-                    color: amountColor, // 차별화된 강조 색상
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(Sizes.size20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
                   ),
                 ),
-              ),
-              Gaps.v40,
-              Center(
                 child: Text(
-                  maxLines: 2,
-                  randomEventMessage,
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
+                  person.note ?? ' ',
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontSize: Sizes.size14,
-                    fontStyle: FontStyle.italic,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.8),
-                  ),
-                ),
-              ),
-              Spacer(),
-              Center(
-                child: Text(
-                  'CashHeart',
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    fontSize: Sizes.size14,
-                    fontStyle: FontStyle.italic,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
             ],
+          ),
+          const Spacer(),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isGiven ? "받은 마음" : "보낸 마음",
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: Sizes.size14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  //TODO: person의 totalAmount 가져와서 적용
+                  totalFormat,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: Sizes.size48,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(
+                  Sizes.size16,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(
+                    Sizes.size16,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    randomEventMessage,
+                    textAlign: TextAlign.start,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: Sizes.size16,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ),
+              Gaps.v20,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    "CashHeart",
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: Sizes.size14,
+                      fontWeight: FontWeight.w500,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditButton extends StatelessWidget {
+  const _EditButton({
+    super.key,
+    required this.person,
+  });
+
+  final Person person;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: -Sizes.size64,
+      right: -Sizes.size64,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => AddEditPersonScreen(
+                personId: person.id,
+              ),
+            ),
+          );
+        },
+        child: Container(
+          width: Sizes.size40 * 5,
+          height: Sizes.size40 * 5,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Transform.translate(
+            offset: Offset(
+              -Sizes.size20,
+              Sizes.size20,
+            ),
+            child: const Icon(
+              Icons.edit,
+              color: Colors.white70,
+              size: Sizes.size28,
+            ),
           ),
         ),
       ),
@@ -218,76 +404,49 @@ class _EmptyPersonBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // FloatingActionButton과 동일한 동작 (AddEditPersonScreen으로 이동)
-    return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('지인을 등록해 주세요!'),
-            content: Text('지인이 없으면 기록을 추가할 수 없어요.'),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/icons/icon-black-512.png',
+            width: MediaQuery.of(context).size.width / 2,
           ),
-        );
-      },
-      child: Card(
-        elevation: Sizes.size8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Sizes.size32),
-        ),
-        // 비어있는 카드임을 시각적으로 나타내기 위해 색상을 Surface Container Lowest로 설정
-        color: Theme.of(context).colorScheme.surfaceContainerLowest,
-
-        child: Padding(
-          padding: const EdgeInsets.all(
-            Sizes.size40,
+          Gaps.v10,
+          Text(
+            "소중한 마음을 기록해보세요",
+            style: TextStyle(
+              fontSize: Sizes.size20,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[800],
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '지인 등록',
-                style: TextStyle(
-                  fontSize: Sizes.size32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Gaps.v10,
-              Text(
-                'CashHeart는 축의금 개인 기록 앱 입니다.',
-                style: TextStyle(
-                  fontSize: Sizes.size16,
-                ),
-              ),
-              Gaps.v20,
-              Text(
-                '오른쪽 하단 버튼을 눌러 첫 번째 인연을 등록하세요.',
-                textAlign: TextAlign.start,
-                style: TextStyle(
-                  fontSize: Sizes.size16,
-                ),
-              ),
-              Spacer(),
-              Center(
-                child: FaIcon(
-                  FontAwesomeIcons.userPlus,
-                  size: Sizes.size60,
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-              ),
-              Gaps.v40,
-              Center(
-                child: Text(
-                  'CashHeart',
-                  textAlign: TextAlign.start,
-                  style: TextStyle(
-                    fontSize: Sizes.size14,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.black38,
-                  ),
-                ),
-              ),
-            ],
+          Gaps.v10,
+          Text(
+            "아직 등록된 인연이 없습니다.\n첫 번째 지인을 등록하고 관리를 시작하세요.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: Sizes.size14,
+              color: Colors.grey[500],
+              height: 2.0,
+            ),
           ),
-        ),
+          Gaps.v40,
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => AddEditPersonScreen(),
+              ));
+            },
+            style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(
+              horizontal: Sizes.size32,
+              vertical: Sizes.size14,
+            )),
+            icon: const Icon(Icons.add),
+            label: const Text("첫 인연 등록"),
+          )
+        ],
       ),
     );
   }

@@ -36,9 +36,13 @@ class PersonRepository {
       throw ArgumentError('updatePerson: person.id가 null 입니다.');
     }
 
+    final data = person.toMap();
+
+    data.remove('created_at');
+
     return await db.update(
       'persons',
-      person.toMap(),
+      data,
       where: 'id = ?', //WHERE id = ?
       whereArgs: [person.id], // ? 에 들어갈 값
     );

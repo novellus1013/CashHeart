@@ -36,20 +36,12 @@ class MyApp extends StatelessWidget {
         home: HomeScreen(),
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          scaffoldBackgroundColor: Colors.white,
           fontFamily: "pretendard",
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.white,
           ),
-          textTheme: const TextTheme(
-            displayLarge: TextStyle(fontWeight: FontWeight.w700),
-            displayMedium: TextStyle(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
           appBarTheme: const AppBarTheme(
             centerTitle: false,
-            backgroundColor: Colors.white,
             scrolledUnderElevation: 0,
             elevation: 0,
             titleTextStyle: TextStyle(
