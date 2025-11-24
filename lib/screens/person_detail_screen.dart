@@ -6,7 +6,7 @@ import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/providers/gift_view_model.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/screens/add_edit_gift_screen.dart';
-import 'package:cash_heart/screens/share_card_screen.dart';
+import 'package:cash_heart/screens/home_screen.dart';
 import 'package:cash_heart/utils/event_message_handler.dart';
 import 'package:cash_heart/utils/money_formatter.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
@@ -104,8 +104,8 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => ShareCardScreen()));
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (context) => HomeScreen()));
             },
             child: Text(
               'Share',
@@ -231,7 +231,6 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
 class _DetailList extends StatelessWidget {
   const _DetailList({
-    super.key,
     required this.filteredList,
   });
 

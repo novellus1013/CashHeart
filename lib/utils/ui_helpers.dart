@@ -1,3 +1,4 @@
+import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/models/gift_types.dart';
 import 'package:flutter/material.dart';
 
@@ -6,16 +7,41 @@ Future<bool?> showWarningPopDialog(BuildContext context) async {
   return await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-            title: Text('정말 나가시겠습니까?'),
-            content: Text('지금까지 입력한 모든 내용이 사라집니다.'),
+            title: Text(
+              '정말 나가시겠습니까?',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: Sizes.size20,
+              ),
+            ),
+            content: Text(
+              '지금까지 입력한 모든 내용이 사라집니다.',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+              ),
+            ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text('나가기'),
-              ),
-              TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('취소'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey.shade600,
+                ),
+                child: Text(
+                  '취소',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(
+                  '나가기',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ],
           ));

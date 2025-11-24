@@ -11,7 +11,6 @@ import 'package:cash_heart/screens/setting_screen.dart';
 import 'package:cash_heart/utils/event_message_handler.dart';
 import 'package:cash_heart/utils/money_formatter.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -75,7 +74,6 @@ class _PersonPageView extends StatefulWidget {
   final PageController pageController;
 
   const _PersonPageView({
-    super.key,
     required this.personList,
     required this.pageController,
   });
@@ -150,7 +148,7 @@ class _PersonPageViewState extends State<_PersonPageView> {
 class _PersonBox extends StatelessWidget {
   final Person person;
 
-  const _PersonBox({super.key, required this.person});
+  const _PersonBox({required this.person});
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +221,6 @@ class _PersonBox extends StatelessWidget {
 
 class _Content extends StatelessWidget {
   const _Content({
-    super.key,
     required this.person,
     required this.isGiven,
     required this.totalFormat,
@@ -353,7 +350,6 @@ class _Content extends StatelessWidget {
 
 class _EditButton extends StatelessWidget {
   const _EditButton({
-    super.key,
     required this.person,
   });
 
