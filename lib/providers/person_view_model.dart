@@ -1,9 +1,12 @@
 import 'package:cash_heart/models/person.dart';
+import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
 import 'package:flutter/material.dart';
 
 class PersonViewModel extends ChangeNotifier {
   final PersonRepository _repository;
+
+  final GiftRepository _giftRepository = GiftRepository.instance;
 
   //의존성 주입(DI): PersonViewModel은 _repository에 어떤 class가 들어오는지, 해당 class는 어떤 인스턴스를 가지는지 등을 알 수 없다 (강결합 x)
   PersonViewModel(this._repository);
@@ -14,11 +17,18 @@ class PersonViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  Map<int, int> _totalsByPerson = {};
+  Map<int, int> get totalsByPerson => _totalsByPerson;
+
+  int getTotalForPerson(int personId) => _totalsByPerson[personId] ?? 0;
+
   Future<void> loadPersons() async {
     _isLoading = true;
     notifyListeners();
 
     _persons = await _repository.getAllPersons();
+
+    _totalsByPerson = await _giftRepository.getTotalsByPerson();
 
     _isLoading = false;
     notifyListeners();

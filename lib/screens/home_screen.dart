@@ -8,7 +8,6 @@ import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:cash_heart/screens/add_edit_person_screen.dart';
 import 'package:cash_heart/screens/person_detail_screen.dart';
 import 'package:cash_heart/screens/setting_screen.dart';
-import 'package:cash_heart/utils/event_message_handler.dart';
 import 'package:cash_heart/utils/money_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -19,7 +18,9 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //read와 달리 notifyListeners()가 호출될 때마다 home_screen이 자동으로 다시 build 실행 - ui가 항상 최신화
-    final personList = context.watch<PersonViewModel>().persons;
+    final personVm = context.watch<PersonViewModel>();
+
+    final persons = personVm.persons;
 
     final PageController pageController = PageController();
 
@@ -45,7 +46,7 @@ class HomeScreen extends StatelessWidget {
           )
         ],
       ),
-      floatingActionButton: personList.isEmpty
+      floatingActionButton: persons.isEmpty
           ? null
           : FloatingActionButton(
               backgroundColor: const Color(0xffFF6258),
@@ -61,20 +62,19 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-      body: personList.isEmpty
+      body: persons.isEmpty
           ? _EmptyPersonBox()
-          : _PersonPageView(
-              personList: personList, pageController: pageController),
+          : _PersonPageView(persons: persons, pageController: pageController),
     );
   }
 }
 
 class _PersonPageView extends StatefulWidget {
-  final List<Person> personList;
+  final List<Person> persons;
   final PageController pageController;
 
   const _PersonPageView({
-    required this.personList,
+    required this.persons,
     required this.pageController,
   });
 
@@ -113,7 +113,7 @@ class _PersonPageViewState extends State<_PersonPageView> {
         Expanded(
           child: PageView.builder(
             controller: _pageController,
-            itemCount: widget.personList.length,
+            itemCount: widget.persons.length,
             itemBuilder: (context, index) {
               //현재 페이지 vs 양 옆 카드
               double value = (index - _currentPageValue).abs();
@@ -133,7 +133,10 @@ class _PersonPageViewState extends State<_PersonPageView> {
                     padding: const EdgeInsets.only(
                       bottom: Sizes.size56 + Sizes.size56,
                     ),
-                    child: _PersonBox(person: widget.personList[index]),
+                    child: _PersonBox(
+                      person: widget.persons[index],
+                      context: context,
+                    ),
                   ),
                 ),
               );
@@ -148,31 +151,33 @@ class _PersonPageViewState extends State<_PersonPageView> {
 
 class _PersonBox extends StatelessWidget {
   final Person person;
+  final BuildContext context;
 
-  const _PersonBox({required this.person});
+  const _PersonBox({required this.person, required this.context});
 
   @override
   Widget build(BuildContext context) {
     //TODO: 나중에 totalAmount로 변경
-    final int fakeAmount = 200000;
 
-    final randomEventMessage = getRandomEventMessage(fakeAmount);
+    final personVm = context.watch<PersonViewModel>();
+    final int totalAmount = personVm.getTotalForPerson(person.id!);
 
-    final totalFormat = MoneyFormatter.formatCurrency(fakeAmount, 'ko_KR', '₩');
+    final totalFormat =
+        MoneyFormatter.formatCurrency(totalAmount, 'ko_KR', '₩');
 
     //TODO: person의 totalAmount를 기준으로 isReceived 정의
-    final bool isGiven = false;
+    final bool isHappy = totalAmount > 0 ? true : false;
 
-    final Gradient backgroundGradient = isGiven
+    final Gradient backgroundGradient = isHappy
         ? const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [cashBlueColor, Color(0xFF36D1DC)],
+            colors: [primaryColor, Color(0xFFFB9F35)],
           )
         : const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [primaryColor, Color(0xFFFB9F35)],
+            colors: [cashBlueColor, Color(0xFF36D1DC)],
           );
 
     return GestureDetector(
@@ -207,10 +212,10 @@ class _PersonBox extends StatelessWidget {
           children: [
             //카드 메인
             _Content(
-                person: person,
-                isGiven: isGiven,
-                totalFormat: totalFormat,
-                randomEventMessage: randomEventMessage),
+              person: person,
+              isHappy: isHappy,
+              totalFormat: totalFormat,
+            ),
             // edit 버튼용 ui
             _EditButton(person: person),
           ],
@@ -223,15 +228,13 @@ class _PersonBox extends StatelessWidget {
 class _Content extends StatelessWidget {
   const _Content({
     required this.person,
-    required this.isGiven,
+    required this.isHappy,
     required this.totalFormat,
-    required this.randomEventMessage,
   });
 
   final Person person;
-  final bool isGiven;
+  final bool isHappy;
   final String totalFormat;
-  final String randomEventMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -277,56 +280,36 @@ class _Content extends StatelessWidget {
           ),
           const Spacer(),
           Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isGiven ? "받은 마음" : "보낸 마음",
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: Sizes.size14,
-                    fontWeight: FontWeight.w500,
+            child: Transform.rotate(
+              angle: isHappy ? -0.2 : 0.2,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isHappy ? "받은 마음" : "보낸 마음",
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: Sizes.size14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                Text(
-                  //TODO: person의 totalAmount 가져와서 적용
-                  totalFormat,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: Sizes.size48,
-                    fontWeight: FontWeight.w900,
+                  Text(
+                    //TODO: person의 totalAmount 가져와서 적용
+                    totalFormat,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: Sizes.size36,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const Spacer(),
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Container(
-              //   padding: const EdgeInsets.all(
-              //     Sizes.size16,
-              //   ),
-              //   decoration: BoxDecoration(
-              //     color: Colors.white.withValues(alpha: 0.2),
-              //     borderRadius: BorderRadius.circular(
-              //       Sizes.size16,
-              //     ),
-              //   ),
-              //   child: Center(
-              //     child: Text(
-              //       randomEventMessage,
-              //       textAlign: TextAlign.start,
-              //       style: const TextStyle(
-              //         color: Colors.white,
-              //         fontSize: Sizes.size16,
-              //         fontStyle: FontStyle.italic,
-              //       ),
-              //     ),
-              //   ),
-              // ),
-              // Gaps.v20,
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [

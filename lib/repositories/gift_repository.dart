@@ -60,18 +60,29 @@ class GiftRepository {
 
     return result.map((row) => Gift.fromMap(row)).toList();
   }
-}
 
+  //모든 Person의 total 합계를 불러오는 로직 - gifts table에 접근하기 때문에
+  //person_repository가 아닌 여기에 작성
+  Future<Map<int, int>> getTotalsByPerson() async {
+    final db = await _db;
 
+    final result = await db.rawQuery('''
+      SELECT person_id, SUM(amount * direction) AS total
+      FROM gifts
+      GROUP BY person_id
+    ''');
 
+    final Map<int, int> totals = {};
 
+    for (final raw in result) {
+      final personId = raw['person_id'] as int;
+      final rawTotal = raw['total'];
+      final total = rawTotal == null ? 0 : (rawTotal as num).toInt();
+      totals[personId] = total;
+    }
 
-  // Future<int> getReceivedTotalForPerson(int personId) async {
-  //   final db = await _db;
-  //   final result = await db.rawQuery(
-
-  //   )
-  // }
+    return totals;
+  }
 
   // Future<List<Gift>> getAllGifts() async {
   //   final db = await _db;
@@ -82,3 +93,4 @@ class GiftRepository {
 
   //   return result.map((row) => Gift.fromMap(row)).toList();
   // }
+}
