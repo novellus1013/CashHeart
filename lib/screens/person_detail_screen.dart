@@ -74,6 +74,15 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     final sortedList = [...filteredList]
       ..sort((a, b) => b.date.compareTo(a.date));
 
+    //로딩 중
+    if (giftVm.isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,

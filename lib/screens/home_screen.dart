@@ -24,6 +24,15 @@ class HomeScreen extends StatelessWidget {
 
     final PageController pageController = PageController();
 
+    //로딩 중
+    if (personVm.isLoading) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
