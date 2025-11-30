@@ -1,6 +1,7 @@
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/models/gift_types.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 //유저가 form 화면에서 저장 없이 이탈하려 할 경우, 경고창 보여줌.
 Future<bool?> showWarningPopDialog(BuildContext context) async {
@@ -66,3 +67,13 @@ const Map<GiftCategory, GiftCategoryMeta> giftCategoryMeta = {
   GiftCategory.anniversary: GiftCategoryMeta('🎉', Color(0xFFFDE7E7)),
   GiftCategory.etc: GiftCategoryMeta('🎁', Color(0xFFECECEC)),
 };
+
+//itnl 패키지를 이용한 통화 표기 방식용 함수
+class MoneyFormatter {
+  static String formatCurrency(num amount, String locale, String symbol) {
+    return NumberFormat.currency(
+      locale: locale,
+      symbol: symbol,
+    ).format(amount);
+  }
+}

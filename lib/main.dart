@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  SentryWidgetsFlutterBinding.ensureInitialized();
 
   await initializeDateFormatting();
 
@@ -20,16 +20,16 @@ void main() async {
           'https://8f01d649f395a7c25a20358d75df2d95@o4510417424285696.ingest.us.sentry.io/4510417425465344';
 
       // 개인정보(IP, 헤더 등)도 함께 전송
-      options.sendDefaultPii = true;
+      options.sendDefaultPii = false;
       options.enableLogs = true;
 
       //성능 모니터링 100% 샘플링. 배포 후 상황 보고 수치 낮추기 (0.1 시도)
-      options.tracesSampleRate = 1.0;
+      options.tracesSampleRate = 0.1;
       options.profilesSampleRate = 0;
       //일반 녹화
       options.replay.sessionSampleRate = 0.0;
       //에러시 녹화
-      options.replay.onErrorSampleRate = 1.0;
+      options.replay.onErrorSampleRate = 0.0;
 
       // 환경
       options.environment = kReleaseMode ? 'production' : 'development';
@@ -72,6 +72,7 @@ class MyApp extends StatelessWidget {
           appBarTheme: const AppBarTheme(
             centerTitle: false,
             scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
             elevation: 0,
             titleTextStyle: TextStyle(
               fontWeight: FontWeight.w700,

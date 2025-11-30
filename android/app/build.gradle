@@ -5,8 +5,15 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+//keystore 설정 1
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
-    namespace = "com.example.cash_heart"
+    namespace = "co.novelus.cashheart"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +28,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.cash_heart"
+        applicationId = "co.novelus.cashheart"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -29,6 +36,17 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+    
+    //keystore 설정2
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile keystoreProperties['storeFile'] ?
+                file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+        }
+}
 
     buildTypes {
         release {

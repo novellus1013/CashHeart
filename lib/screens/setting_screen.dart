@@ -8,7 +8,7 @@ class SettingScreen extends StatelessWidget {
   //TODO: 차후 국제화에 따라 en 버전 추가
   final String _lang = 'ko';
 
-  final String _support = 'noveluslab@gmail.com';
+  final String _support = 'noveluslab@proton.me';
 
   const SettingScreen({super.key});
 

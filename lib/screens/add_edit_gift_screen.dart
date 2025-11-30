@@ -4,6 +4,7 @@ import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/models/gift.dart';
 import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/providers/gift_view_model.dart';
+import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
 import 'package:cash_heart/widgets/gift_date_picker_sheet.dart';
 import 'package:flutter/cupertino.dart';
@@ -46,6 +47,8 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
   DateTime? _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
 
+  final personNoteRegex = RegExp(r'^[a-zA-Z가-힣\s]+$');
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -75,7 +78,8 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
     //!false = true를 이용해 db에 잘못된 값 삽입 방지
     if (!_formKey.currentState!.validate()) return;
 
-    final vm = context.read<GiftViewModel>();
+    final giftVm = context.read<GiftViewModel>();
+    final personVm = context.read<PersonViewModel>();
     //trim()은 문자열 앞과 뒤의 공백 제거
     final direction = _currentDirection;
     final amount = int.parse(_amountController.text.trim());
@@ -94,10 +98,12 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
     );
 
     if (_isEdit) {
-      await vm.updateGift(gift);
+      await giftVm.updateGift(gift);
     } else {
-      await vm.addGift(gift);
+      await giftVm.addGift(gift);
     }
+
+    await personVm.refreshTotals();
 
     // //mounted는 화면이 살아있는지 확인할 수 있는 State class의 내장 함수
     // //mounted는 해당 State에서 context를 사용해도 좋은지 확인하는 안전장치
@@ -106,8 +112,6 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
   }
 
   void _formDatePicker() async {
-    FocusScope.of(context).unfocus(); // 키보드 닫기
-
     final today = DateTime.now();
     final initial = _selectedDay ?? today;
 
@@ -143,194 +147,203 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
           Navigator.of(context).pop();
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(_isEdit ? '지인 수정하기' : '지인 추가하기'),
-          actions: [
-            ElevatedButton(
-              onPressed: _onSave,
-              child: Text(
-                _isEdit ? '수 정' : '저 장',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(_isEdit ? '내역 수정하기' : '내역 추가하기'),
+            actions: [
+              ElevatedButton(
+                onPressed: _onSave,
+                child: Text(
+                  _isEdit ? '수 정' : '저 장',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-            Gaps.h10,
-          ],
-        ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsetsGeometry.all(
-              Sizes.size20,
-            ),
-            child: GestureDetector(
-              onTap: () {
-                FocusScope.of(context).unfocus();
-              },
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Gaps.v20,
-                    Text('이름'),
-                    Gaps.v10,
-                    TextField(
-                      enabled: false,
-                      decoration: InputDecoration(
-                        hintText: widget.personName,
-                        disabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                          color: Colors.grey,
-                        )),
-                      ),
-                    ),
-                    Gaps.v20,
-                    CupertinoSlidingSegmentedControl(
-                      backgroundColor: const Color(0xFFFFF5F3),
-                      thumbColor: _currentDirection == GiftDirection.received
-                          ? primaryColor
-                          : cashBlueColor,
-                      padding: const EdgeInsets.all(3),
-                      groupValue: _currentDirection,
-                      children: {
-                        GiftDirection.received: _buildItem(
-                          label: '받은 돈',
-                          selected: _currentDirection == GiftDirection.received,
+              Gaps.h10,
+            ],
+          ),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsetsGeometry.all(
+                Sizes.size20,
+              ),
+              child: GestureDetector(
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                },
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Gaps.v20,
+                      Text('이름'),
+                      Gaps.v10,
+                      TextField(
+                        enabled: false,
+                        decoration: InputDecoration(
+                          hintText: widget.personName,
+                          disabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                            color: Colors.grey,
+                          )),
                         ),
-                        GiftDirection.given: _buildItem(
-                          label: '준 돈',
-                          selected: _currentDirection == GiftDirection.given,
-                        ),
-                      },
-                      onValueChanged: (value) {
-                        if (value == null) return;
-
-                        setState(() {
-                          _currentDirection = value;
-                        });
-                      },
-                    ),
-                    Gaps.v20,
-                    Text('금액 (필수)'),
-                    Gaps.v10,
-                    TextFormField(
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      maxLines: 1,
-                      controller: _amountController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: "0",
-                        suffix: Text('원'),
-                        border: OutlineInputBorder(),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '금액을 입력해주세요.';
-                        }
-
-                        final number = int.tryParse(value);
-
-                        if (number == null) {
-                          return '올바른 숫자를 입력해주세요.';
-                        }
-
-                        if (number <= 0) {
-                          return '금액은 0보다 커야 합니다.';
-                        }
-
-                        return null;
-                      },
-                    ),
-                    Gaps.v10,
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('카테고리 (필수)'),
-                              Gaps.v10,
-                              DropdownButtonFormField(
-                                decoration: InputDecoration(
-                                  labelText: '목록',
-                                  border: OutlineInputBorder(), // 테두리 스타일
-                                ),
-                                items: GiftCategory.values.map((type) {
-                                  return DropdownMenuItem(
-                                    value: type,
-                                    child: Text(type.label),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _currentCategory = value;
-                                  });
-                                },
-                                validator: (value) {
-                                  if (value == null) {
-                                    return "카테고리를 선택해주세요.";
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
+                      Gaps.v20,
+                      CupertinoSlidingSegmentedControl(
+                        backgroundColor: const Color(0xFFFFF5F3),
+                        thumbColor: _currentDirection == GiftDirection.received
+                            ? primaryColor
+                            : cashBlueColor,
+                        padding: const EdgeInsets.all(3),
+                        groupValue: _currentDirection,
+                        children: {
+                          GiftDirection.received: _buildItem(
+                            label: '받은 돈',
+                            selected:
+                                _currentDirection == GiftDirection.received,
                           ),
-                        ),
-                        Gaps.h20,
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('날짜 (필수)'),
-                              Gaps.v10,
-                              TextFormField(
-                                controller: _dateController,
-                                decoration: InputDecoration(
-                                  hintText: '1900-01-01',
-                                  border: OutlineInputBorder(),
-                                ),
-                                readOnly: true,
-                                onTap: _formDatePicker,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return "날짜를 선택해주세요";
-                                  }
-
-                                  return null;
-                                },
-                              )
-                            ],
+                          GiftDirection.given: _buildItem(
+                            label: '준 돈',
+                            selected: _currentDirection == GiftDirection.given,
                           ),
-                        ),
-                      ],
-                    ),
-                    Gaps.v10,
-                    Text('거래 내역'),
-                    Gaps.v10,
-                    TextFormField(
-                      controller: _giftNoteController,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      maxLines: 1,
-                      maxLength: 20,
-                      decoration: InputDecoration(
-                        hintText: "ex) 돌 잔치 축하, (지인) 어머니 팔순 등 (20자 이하)",
-                        border: OutlineInputBorder(),
+                        },
+                        onValueChanged: (value) {
+                          if (value == null) return;
+
+                          setState(() {
+                            _currentDirection = value;
+                          });
+                        },
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '거래 내역을 작성해주세요!';
-                        }
+                      Gaps.v20,
+                      Text('금액 (필수)'),
+                      Gaps.v10,
+                      TextFormField(
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        maxLines: 1,
+                        controller: _amountController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: "0",
+                          suffix: Text('원'),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '금액을 입력해주세요.';
+                          }
 
-                        if (value.length > 20) {
-                          return '거래 내역은 20자 이하여야 합니다.';
-                        }
+                          final number = int.tryParse(value);
 
-                        return null;
-                      },
-                    ),
-                  ],
+                          if (number == null) {
+                            return '올바른 숫자를 입력해주세요.';
+                          }
+
+                          if (number <= 0) {
+                            return '금액은 0보다 커야 합니다.';
+                          }
+
+                          return null;
+                        },
+                      ),
+                      Gaps.v10,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('카테고리 (필수)'),
+                                Gaps.v10,
+                                DropdownButtonFormField(
+                                  initialValue: _currentCategory,
+                                  decoration: InputDecoration(
+                                    labelText: '목록',
+                                    border: OutlineInputBorder(), // 테두리 스타일
+                                  ),
+                                  items: GiftCategory.values.map((type) {
+                                    return DropdownMenuItem(
+                                      value: type,
+                                      child: Text(type.label),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _currentCategory = value;
+                                    });
+                                  },
+                                  validator: (value) {
+                                    if (value == null) {
+                                      return "카테고리를 선택해주세요.";
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          Gaps.h20,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('날짜 (필수)'),
+                                Gaps.v10,
+                                TextFormField(
+                                  controller: _dateController,
+                                  decoration: InputDecoration(
+                                    hintText: '1900-01-01',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  readOnly: true,
+                                  onTap: _formDatePicker,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "날짜를 선택해주세요";
+                                    }
+
+                                    return null;
+                                  },
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Gaps.v10,
+                      Text('거래 내역 (필수)'),
+                      Gaps.v10,
+                      TextFormField(
+                        controller: _giftNoteController,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        maxLines: 1,
+                        maxLength: 20,
+                        decoration: InputDecoration(
+                          hintText: "ex) 돌 잔치 축하, (지인) 어머니 팔순 등 (20자 이하)",
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return '내역을 입력해 주세요.';
+                          }
+
+                          if (!personNoteRegex.hasMatch(value)) {
+                            return '내역은 완성된 한글 혹은 영문만 입력 가능합니다.';
+                          }
+
+                          if (value.length < 2 || value.length > 20) {
+                            return '내역은 2자 이상 20자 미만이어야 합니다.';
+                          }
+
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -6,7 +6,6 @@ import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/providers/gift_view_model.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/screens/add_edit_gift_screen.dart';
-import 'package:cash_heart/utils/money_formatter.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -104,6 +103,8 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         // ],
       ),
       floatingActionButton: FloatingActionButton(
+        // FAB의 Hero 위젯 충돌 오류 방지
+        heroTag: null,
         backgroundColor: Color(0xffFF6258),
         shape: CircleBorder(),
         onPressed: () {
@@ -261,7 +262,15 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                   }),
                 ),
               ),
-              Gaps.v20,
+              Gaps.v8,
+              Text(
+                '내역을 오른쪽으로 당기면 수정이나 삭제가 가능해요!',
+                style: TextStyle(
+                  fontSize: Sizes.size12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              Gaps.v10,
 
               //무한 스크롤 리스트
               _DetailList(filteredList: sortedList),
@@ -428,7 +437,7 @@ class _DetailList extends StatelessWidget {
                         ),
                       ),
                       Gaps.h12,
-                      // 제목 및 날짜
+                      // 노트 및 날짜
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,7 +445,7 @@ class _DetailList extends StatelessWidget {
                             Text(
                               data.note,
                               style: TextStyle(
-                                fontSize: Sizes.size16,
+                                fontSize: Sizes.size14,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.black87,
                               ),
@@ -458,6 +467,7 @@ class _DetailList extends StatelessWidget {
                         style: TextStyle(
                           fontSize: Sizes.size16,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 0.1,
                           color: isReceived ? primaryColor : cashBlueColor,
                         ),
                       ),

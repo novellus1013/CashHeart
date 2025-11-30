@@ -95,30 +95,28 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
           Navigator.of(context).pop();
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(_isEdit ? '지인 수정하기' : '지인 추가하기'),
-          actions: [
-            ElevatedButton(
-              onPressed: _onSave,
-              child: Text(
-                _isEdit ? '수 정' : '저 장',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(_isEdit ? '지인 수정하기' : '지인 추가하기'),
+            actions: [
+              ElevatedButton(
+                onPressed: _onSave,
+                child: Text(
+                  _isEdit ? '수 정' : '저 장',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-            Gaps.h10,
-          ],
-        ),
-        body: Padding(
-          padding: EdgeInsetsGeometry.all(
-            Sizes.size20,
+              Gaps.h10,
+            ],
           ),
-          child: GestureDetector(
-            onTap: () {
-              FocusScope.of(context).unfocus();
-            },
+          body: Padding(
+            padding: EdgeInsets.all(
+              Sizes.size20,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -129,7 +127,8 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                   Gaps.v10,
                   CustomTextFormField(
                     controller: _personNameController,
-                    hintText: '이름 (필수)',
+                    hintText: '이름',
+                    maxLength: 10,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return '이름을 입력해 주세요.';
@@ -139,8 +138,8 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                         return '이름은 완성된 한글 혹은 영문만 입력 가능합니다.';
                       }
 
-                      if (value.length < 2 || value.length > 20) {
-                        return '이름은 2자 이상 20자 미만이어야 합니다.';
+                      if (value.length < 2 || value.length > 10) {
+                        return '이름은 2자 이상 10자 미만이어야 합니다.';
                       }
 
                       return null;

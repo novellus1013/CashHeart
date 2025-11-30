@@ -34,6 +34,11 @@ class PersonViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshTotals() async {
+    _totalsByPerson = await _giftRepository.getTotalsByPerson();
+    notifyListeners();
+  }
+
   Person? getPersonById(int id) {
     try {
       return _persons.firstWhere((e) => e.id == id);

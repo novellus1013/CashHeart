@@ -8,7 +8,7 @@ import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:cash_heart/screens/add_edit_person_screen.dart';
 import 'package:cash_heart/screens/person_detail_screen.dart';
 import 'package:cash_heart/screens/setting_screen.dart';
-import 'package:cash_heart/utils/money_formatter.dart';
+import 'package:cash_heart/utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -58,6 +58,8 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: persons.isEmpty
           ? null
           : FloatingActionButton(
+              // FAB의 Hero 위젯 충돌 오류 방지
+              heroTag: null,
               backgroundColor: const Color(0xffFF6258),
               shape: const CircleBorder(),
               onPressed: () {
@@ -152,7 +154,6 @@ class _PersonPageViewState extends State<_PersonPageView> {
             },
           ),
         ),
-        Gaps.v60,
       ],
     );
   }
@@ -200,6 +201,7 @@ class _PersonBox extends StatelessWidget {
         );
       },
       child: Container(
+        clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
           gradient: backgroundGradient,
           borderRadius: BorderRadius.circular(Sizes.size32),
@@ -254,34 +256,40 @@ class _Content extends StatelessWidget {
             children: [
               Text(
                 person.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: Sizes.size32,
+                  fontSize: Sizes.size28,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Gaps.v10,
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Sizes.size10,
-                  vertical: Sizes.size4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(Sizes.size20),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Text(
-                  person.note ?? ' ',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: Sizes.size14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+              person.note == null
+                  ? Gaps.v5
+                  : Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Sizes.size10,
+                        vertical: Sizes.size4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(Sizes.size20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Text(
+                        person.note ?? ' ',
+                        style: person.note != null
+                            ? const TextStyle(
+                                color: Colors.white,
+                                fontSize: Sizes.size14,
+                                fontWeight: FontWeight.w500,
+                              )
+                            : null,
+                      ),
+                    ),
             ],
           ),
           const Spacer(),
@@ -317,7 +325,7 @@ class _Content extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Text(
                     "CashHeart",
@@ -348,8 +356,8 @@ class _EditButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: -Sizes.size64,
-      right: -Sizes.size64,
+      bottom: -Sizes.size52,
+      right: -Sizes.size52,
       child: GestureDetector(
         onTap: () {
           Navigator.of(context).push(
@@ -361,16 +369,16 @@ class _EditButton extends StatelessWidget {
           );
         },
         child: Container(
-          width: Sizes.size40 * 5,
-          height: Sizes.size40 * 5,
+          width: Sizes.size40 * 4,
+          height: Sizes.size40 * 4,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Transform.translate(
             offset: Offset(
-              -Sizes.size20,
-              Sizes.size20,
+              -Sizes.size10,
+              -Sizes.size10,
             ),
             child: const Icon(
               Icons.edit,
