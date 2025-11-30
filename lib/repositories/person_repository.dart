@@ -1,5 +1,7 @@
 import 'package:cash_heart/models/person.dart';
 import 'package:cash_heart/services/app_database.dart';
+import 'package:flutter/widgets.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// persons 테이블에 대한 CRUD(생성/조회/수정/삭제)를 담당하는 계층.
@@ -17,66 +19,81 @@ class PersonRepository {
 
   // db.insert는 삽입된 row의 id를 반환
   Future<int> insertPerson(Person person) async {
-    final db = await _db;
+    try {
+      final db = await _db;
 
-    final data = person.toMap();
+      final data = person.toMap();
 
-    data['created_at'] = DateTime.now().millisecondsSinceEpoch;
+      data['created_at'] = DateTime.now().millisecondsSinceEpoch;
 
-    return await db.insert(
-      'persons',
-      data,
-      conflictAlgorithm: ConflictAlgorithm.replace, // !definition 살펴보기
-    );
+      return await db.insert(
+        'persons',
+        data,
+        conflictAlgorithm: ConflictAlgorithm.replace, // !definition 살펴보기
+      );
+    } catch (e, st) {
+      debugPrint('insertPerson error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
   }
 
   Future<int> updatePerson(Person person) async {
-    final db = await _db;
-    if (person.id == null) {
-      throw ArgumentError('updatePerson: person.id가 null 입니다.');
+    try {
+      final db = await _db;
+      if (person.id == null) {
+        throw ArgumentError('updatePerson: person.id가 null 입니다.');
+      }
+
+      final data = person.toMap();
+
+      data.remove('created_at');
+
+      return await db.update(
+        'persons',
+        data,
+        where: 'id = ?', //WHERE id = ?
+        whereArgs: [person.id], // ? 에 들어갈 값
+      );
+    } catch (e, st) {
+      debugPrint('updatePerson error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
     }
-
-    final data = person.toMap();
-
-    data.remove('created_at');
-
-    return await db.update(
-      'persons',
-      data,
-      where: 'id = ?', //WHERE id = ?
-      whereArgs: [person.id], // ? 에 들어갈 값
-    );
   }
 
-  // Future<int> deletePerson(int id) async {
-  //   final db = await _db;
-  //   return db.delete(
-  //     'persons',
-  //     where: 'id = ?',
-  //     whereArgs: [id],
-  //   );
-  // }
-
   Future<Person?> getPersonById(int id) async {
-    final db = await _db;
-    final result = await db.query(
-      'persons',
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
-    );
+    try {
+      final db = await _db;
+      final result = await db.query(
+        'persons',
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
 
-    if (result.isEmpty) return null;
-    return Person.fromMap(result.first);
+      if (result.isEmpty) return null;
+      return Person.fromMap(result.first);
+    } catch (e, st) {
+      debugPrint('getPersonById error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
   }
 
   Future<List<Person>> getAllPersons() async {
-    final db = await _db;
-    final result = await db.query(
-      'persons',
-      orderBy: 'created_at DESC', // 생성 시간 내림 차순
-    );
-    //
-    return result.map((row) => Person.fromMap(row)).toList();
+    try {
+      final db = await _db;
+      final result = await db.query(
+        'persons',
+        orderBy: 'created_at DESC', // 생성 시간 내림 차순
+      );
+      //
+      return result.map((row) => Person.fromMap(row)).toList();
+    } catch (e, st) {
+      debugPrint('getAllPersons error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
   }
 }
