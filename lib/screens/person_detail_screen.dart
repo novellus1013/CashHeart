@@ -7,7 +7,6 @@ import 'package:cash_heart/providers/gift_view_model.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/screens/add_edit_gift_screen.dart';
 import 'package:cash_heart/screens/home_screen.dart';
-import 'package:cash_heart/utils/event_message_handler.dart';
 import 'package:cash_heart/utils/money_formatter.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
@@ -36,12 +35,28 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     final allGifts = giftVm.gifts;
     final givenGifts = giftVm.giftGivenList;
     final receivedGifts = giftVm.giftReceivedList;
+    final isHappy = giftVm.totalAmount > 0 ? true : false;
 
-    final totalAmount = giftVm.totalAmount;
-    final totalReceived = giftVm.totalReceived;
-    final totalGiven = giftVm.totalGiven;
+    // final randomEventMessage = getRandomEventMessage(giftVm.totalAmount);
 
-    final randomEventMessage = getRandomEventMessage(totalAmount);
+    final totalAmountFormat =
+        MoneyFormatter.formatCurrency(giftVm.totalAmount, 'ko_KR', '₩ ');
+    final totalReceivedFormat =
+        MoneyFormatter.formatCurrency(giftVm.totalReceived, 'ko_KR', '₩ ');
+    final totalGivenFormat =
+        MoneyFormatter.formatCurrency(giftVm.totalGiven, 'ko_KR', '₩ ');
+
+    final Gradient backgroundGradient = isHappy
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [primaryColor, Color(0xFFFB9F35)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [cashBlueColor, Color(0xFF36D1DC)],
+          );
 
     final List<String> tabs = ["총액", "받은 돈", "준 돈"];
 
@@ -58,42 +73,6 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     //list를 복사하여 날짜 내리차순으로 정리
     final sortedList = [...filteredList]
       ..sort((a, b) => b.date.compareTo(a.date));
-
-    // 현재 탭에 따라 ui용 합계 계산 (int 값이 아닌 formatter를 거친 String 값)
-    late final int currentTotal;
-    if (selectedIndex == 0) {
-      currentTotal = totalAmount;
-    } else if (selectedIndex == 1) {
-      currentTotal = totalReceived;
-    } else {
-      currentTotal = totalGiven;
-    }
-
-    late final String totalCredit;
-    late final Color totalCreditColor;
-
-    if (currentTotal == 0) {
-      totalCredit = MoneyFormatter.formatCurrency(0, 'ko_KR', '₩ ');
-      totalCreditColor = Colors.grey;
-    } else {
-      if (selectedIndex == 0) {
-        // "총액" 탭: 실제 부호 기준으로 + / - 표시
-        final prefix = currentTotal > 0 ? '+ ' : '- ';
-        totalCredit =
-            "$prefix${MoneyFormatter.formatCurrency(currentTotal.abs(), 'ko_KR', '₩ ')}";
-        totalCreditColor = currentTotal > 0 ? primaryColor : cashBlueColor;
-      } else if (selectedIndex == 1) {
-        // "받은 돈" 탭: 항상 + / 초록(또는 primary)
-        totalCredit =
-            "+ ${MoneyFormatter.formatCurrency(currentTotal, 'ko_KR', '₩ ')}";
-        totalCreditColor = primaryColor;
-      } else {
-        // "준 돈" 탭: 항상 - / 파란(cashBlueColor)
-        totalCredit =
-            "- ${MoneyFormatter.formatCurrency(currentTotal, 'ko_KR', '₩ ')}";
-        totalCreditColor = cashBlueColor;
-      }
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -145,26 +124,80 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         child: Center(
           child: Column(
             children: [
-              Gaps.v20,
-              // total
-              Text(
-                totalCredit,
-                style: TextStyle(
-                  fontSize: Sizes.size40,
-                  fontWeight: FontWeight.bold,
-                  color: totalCreditColor,
-                ),
-              ),
               Gaps.v10,
-              // 2. 서브 텍스트
-              Text(
-                randomEventMessage,
-                style: TextStyle(
-                  fontSize: Sizes.size14,
-                  color: Colors.grey,
+              Container(
+                padding: EdgeInsets.symmetric(
+                    horizontal: Sizes.size20, vertical: Sizes.size24),
+                decoration: BoxDecoration(
+                    gradient: backgroundGradient,
+                    borderRadius: BorderRadius.circular(Sizes.size20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        spreadRadius: 5,
+                      ),
+                    ]),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '총액',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: Sizes.size16,
+                            letterSpacing: 1.4,
+                          ),
+                        ),
+                        Icon(
+                          Icons.account_balance_wallet_outlined,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                    Gaps.v10,
+                    Text(
+                      totalAmountFormat,
+                      style: TextStyle(
+                        fontSize: Sizes.size36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Gaps.v20,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _AmountTypeBox(
+                              received: true, amount: totalReceivedFormat),
+                        ),
+                        Container(
+                          color: Colors.white,
+                          width: Sizes.size1,
+                          height: Sizes.size48,
+                        ),
+                        Expanded(
+                          child: _AmountTypeBox(
+                              received: false, amount: totalGivenFormat),
+                        ),
+                      ],
+                    ),
+                    // Gaps.v10,
+                    // Text(
+                    //   randomEventMessage,
+                    //   style: TextStyle(
+                    //     fontSize: Sizes.size14,
+                    //     color: Colors.grey,
+                    //   ),
+                    // ),
+                  ],
                 ),
               ),
               Gaps.v20,
+
               // 탭 필터
               Container(
                 padding: EdgeInsets.all(Sizes.size4),
@@ -219,6 +252,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                 ),
               ),
               Gaps.v20,
+
               //무한 스크롤 리스트
               _DetailList(filteredList: sortedList),
             ],
@@ -313,7 +347,7 @@ class _DetailList extends StatelessWidget {
                 ),
                 // 금액
                 Text(
-                  isReceived ? '+ $oneGiftAmount' : '- $oneGiftAmount',
+                  isReceived ? oneGiftAmount : oneGiftAmount,
                   style: TextStyle(
                     fontSize: Sizes.size16,
                     fontWeight: FontWeight.bold,
@@ -325,6 +359,58 @@ class _DetailList extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _AmountTypeBox extends StatelessWidget {
+  final bool received;
+  final String amount;
+
+  const _AmountTypeBox({
+    required this.received,
+    required this.amount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment:
+              received ? MainAxisAlignment.start : MainAxisAlignment.end,
+          children: [
+            Icon(
+                received
+                    ? Icons.arrow_upward_outlined
+                    : Icons.arrow_downward_outlined,
+                size: Sizes.size14,
+                color: Colors.white),
+            Gaps.h4,
+            Text(
+              received ? '받은 돈' : '준 돈',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: Sizes.size14,
+              ),
+            ),
+          ],
+        ),
+        Gaps.v4,
+        Align(
+          alignment: received ? Alignment.centerLeft : Alignment.centerRight,
+          child: Text(
+            amount,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: Sizes.size16,
+              fontWeight: FontWeight.w700,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        )
+      ],
     );
   }
 }

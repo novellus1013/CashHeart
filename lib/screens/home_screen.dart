@@ -140,6 +140,7 @@ class _PersonPageViewState extends State<_PersonPageView> {
             },
           ),
         ),
+        Gaps.v60,
       ],
     );
   }
@@ -303,29 +304,29 @@ class _Content extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                padding: const EdgeInsets.all(
-                  Sizes.size16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(
-                    Sizes.size16,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    randomEventMessage,
-                    textAlign: TextAlign.start,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: Sizes.size16,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ),
-              Gaps.v20,
+              // Container(
+              //   padding: const EdgeInsets.all(
+              //     Sizes.size16,
+              //   ),
+              //   decoration: BoxDecoration(
+              //     color: Colors.white.withValues(alpha: 0.2),
+              //     borderRadius: BorderRadius.circular(
+              //       Sizes.size16,
+              //     ),
+              //   ),
+              //   child: Center(
+              //     child: Text(
+              //       randomEventMessage,
+              //       textAlign: TextAlign.start,
+              //       style: const TextStyle(
+              //         color: Colors.white,
+              //         fontSize: Sizes.size16,
+              //         fontStyle: FontStyle.italic,
+              //       ),
+              //     ),
+              //   ),
+              // ),
+              // Gaps.v20,
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
