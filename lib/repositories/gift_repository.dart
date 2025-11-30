@@ -27,9 +27,14 @@ class GiftRepository {
     if (gift.id == null) {
       throw ArgumentError('updateGift: gift.id가 null 입니다.');
     }
+
+    final data = gift.toMap();
+
+    data.remove('created_at');
+
     return await db.update(
       'gifts',
-      gift.toMap(),
+      data,
       where: 'id = ?',
       whereArgs: [gift.id],
     );

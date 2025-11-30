@@ -139,8 +139,15 @@ class _SettingsGroup extends StatelessWidget {
           Gaps.v14,
           Container(
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(16.0),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(Sizes.size16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  spreadRadius: 5,
+                ),
+              ],
             ),
             child: Column(
               children: items
