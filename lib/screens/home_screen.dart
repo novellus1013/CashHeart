@@ -157,15 +157,12 @@ class _PersonBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //TODO: 나중에 totalAmount로 변경
-
     final personVm = context.watch<PersonViewModel>();
     final int totalAmount = personVm.getTotalForPerson(person.id!);
 
     final totalFormat =
         MoneyFormatter.formatCurrency(totalAmount, 'ko_KR', '₩');
 
-    //TODO: person의 totalAmount를 기준으로 isReceived 정의
     final bool isHappy = totalAmount > 0 ? true : false;
 
     final Gradient backgroundGradient = isHappy
@@ -294,8 +291,8 @@ class _Content extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    //TODO: person의 totalAmount 가져와서 적용
                     totalFormat,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: Sizes.size36,

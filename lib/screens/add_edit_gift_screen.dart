@@ -5,6 +5,7 @@ import 'package:cash_heart/models/gift.dart';
 import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/providers/gift_view_model.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
+import 'package:cash_heart/widgets/gift_date_picker_sheet.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -42,7 +43,8 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
 
   GiftDirection _currentDirection = GiftDirection.received;
 
-  DateTime? _selectedDate = DateTime.now();
+  DateTime? _selectedDay = DateTime.now();
+  DateTime _focusedDay = DateTime.now();
 
   @override
   void didChangeDependencies() {
@@ -58,7 +60,9 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
         _currentDirection = existing.direction;
         _currentCategory = existing.category;
         //timestamp(ms)를 DateTime로
-        _selectedDate = DateTime.fromMillisecondsSinceEpoch(existing.date);
+        _selectedDay = DateTime.fromMillisecondsSinceEpoch(existing.date);
+        _focusedDay = _selectedDay!;
+        _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDay!);
         _giftNoteController.text = existing.note;
       }
     }
@@ -76,7 +80,7 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
     final direction = _currentDirection;
     final amount = int.parse(_amountController.text.trim());
     final category = _currentCategory;
-    final date = _selectedDate ?? DateTime.now();
+    final date = _selectedDay ?? DateTime.now();
     final note = _giftNoteController.text.trim();
 
     final gift = Gift(
@@ -101,22 +105,23 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
     Navigator.of(context).pop();
   }
 
-  //form에서 DatePicker를 사용하기 위해 만든 함수.
   void _formDatePicker() async {
-    final today = DateTime.now();
-    _selectedDate = today;
+    FocusScope.of(context).unfocus(); // 키보드 닫기
 
-    final selected = await showDatePicker(
+    final today = DateTime.now();
+    final initial = _selectedDay ?? today;
+
+    final selected = await showGiftDatePickerBottomSheet(
       context: context,
-      initialDate: _selectedDate ?? today,
+      initialDate: initial,
       firstDate: DateTime(1990),
       lastDate: today,
     );
 
     if (selected != null) {
       setState(() {
-        _selectedDate = selected;
-
+        _selectedDay = selected;
+        _focusedDay = selected;
         _dateController.text = DateFormat('yyyy-MM-dd').format(selected);
       });
     }
