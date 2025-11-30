@@ -6,7 +6,6 @@ import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/providers/gift_view_model.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/screens/add_edit_gift_screen.dart';
-import 'package:cash_heart/screens/home_screen.dart';
 import 'package:cash_heart/utils/money_formatter.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
@@ -358,93 +357,104 @@ class _DetailList extends StatelessWidget {
           final oneGiftAmount =
               MoneyFormatter.formatCurrency(data.amount, 'ko_KR', '₩');
 
-          return Slidable(
-            endActionPane: ActionPane(
-              motion: ScrollMotion(),
-              children: [
-                SlidableAction(
-                  onPressed: (_) => _onWarningDelteGift(context, data),
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  icon: Icons.delete,
-                  label: '삭제하기',
-                ),
-                SlidableAction(
-                  onPressed: (_) => _onEditGift(context, data),
-                  backgroundColor: cashBlueColor,
-                  foregroundColor: Colors.white,
-                  icon: Icons.edit,
-                  label: '수정하기',
-                ),
-              ],
+          return ClipRRect(
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(Sizes.size20),
+              bottomRight: Radius.circular(Sizes.size20),
             ),
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                vertical: Sizes.size16,
-                horizontal: Sizes.size16,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(Sizes.size24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    spreadRadius: 5,
-                  )
-                ],
-              ),
-              child: Row(
+            child: Slidable(
+              endActionPane: ActionPane(
+                motion: ScrollMotion(),
                 children: [
-                  // 아이콘
-                  Container(
-                    width: Sizes.size48,
-                    height: Sizes.size48,
-                    decoration: BoxDecoration(
-                      color: meta!.bgColor,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      meta.emoji,
-                      style: TextStyle(fontSize: Sizes.size24),
-                    ),
+                  SlidableAction(
+                    onPressed: (_) => _onWarningDelteGift(context, data),
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    icon: Icons.delete,
+                    label: '삭제하기',
                   ),
-                  Gaps.h12,
-                  // 제목 및 날짜
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          data.note,
-                          style: TextStyle(
-                            fontSize: Sizes.size16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        Gaps.v4,
-                        Text(
-                          dateText,
-                          style: TextStyle(
-                            fontSize: Sizes.size12,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // 금액
-                  Text(
-                    isReceived ? oneGiftAmount : oneGiftAmount,
-                    style: TextStyle(
-                      fontSize: Sizes.size16,
-                      fontWeight: FontWeight.bold,
-                      color: isReceived ? primaryColor : cashBlueColor,
-                    ),
+                  SlidableAction(
+                    onPressed: (_) => _onEditGift(context, data),
+                    backgroundColor: cashBlueColor,
+                    foregroundColor: Colors.white,
+                    icon: Icons.edit,
+                    label: '수정하기',
                   ),
                 ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(Sizes.size20),
+                  bottomLeft: Radius.circular(Sizes.size20),
+                ),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    vertical: Sizes.size16,
+                    horizontal: Sizes.size16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        spreadRadius: 5,
+                      )
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // 아이콘
+                      Container(
+                        width: Sizes.size48,
+                        height: Sizes.size48,
+                        decoration: BoxDecoration(
+                          color: meta!.bgColor,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          meta.emoji,
+                          style: TextStyle(fontSize: Sizes.size24),
+                        ),
+                      ),
+                      Gaps.h12,
+                      // 제목 및 날짜
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              data.note,
+                              style: TextStyle(
+                                fontSize: Sizes.size16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            Gaps.v4,
+                            Text(
+                              dateText,
+                              style: TextStyle(
+                                fontSize: Sizes.size12,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 금액
+                      Text(
+                        isReceived ? oneGiftAmount : oneGiftAmount,
+                        style: TextStyle(
+                          fontSize: Sizes.size16,
+                          fontWeight: FontWeight.bold,
+                          color: isReceived ? primaryColor : cashBlueColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           );
