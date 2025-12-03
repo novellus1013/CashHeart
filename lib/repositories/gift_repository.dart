@@ -1,4 +1,5 @@
 import 'package:cash_heart/models/gift.dart';
+import 'package:cash_heart/models/gift_totals.dart';
 import 'package:cash_heart/services/app_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -87,25 +88,35 @@ class GiftRepository {
     }
   }
 
-  //모든 Person의 total 합계를 불러오는 로직 - gifts table에 접근하기 때문에
-  //person_repository가 아닌 여기에 작성
-  Future<Map<int, int>> getTotalsByPerson() async {
+  //getTotalsByPerosn을 총액이 아닌 준 돈, 받은 돈 나눠서 얻어올 수 있도록 로직 변경.
+  Future<Map<int, GiftTotals>> getTotalsByPerson() async {
     try {
       final db = await _db;
 
       final result = await db.rawQuery('''
-      SELECT person_id, SUM(amount * direction) AS total
+      SELECT person_id, 
+      SUM(CASE WHEN direction = 1 THEN amount ELSE 0 END) AS total_received,
+      SUM(CASE WHEN direction = -1 THEN amount ELSE 0 END) AS total_given,
       FROM gifts
       GROUP BY person_id
     ''');
 
-      final Map<int, int> totals = {};
+      final Map<int, GiftTotals> totals = {};
 
       for (final raw in result) {
         final personId = raw['person_id'] as int;
-        final rawTotal = raw['total'];
-        final total = rawTotal == null ? 0 : (rawTotal as num).toInt();
-        totals[personId] = total;
+        final totalsReceived = raw['total_received'];
+        final totalsGiven = raw['total_given'];
+
+        final totalRecived =
+            totalsReceived == null ? 0 : (totalsReceived as num).toInt();
+        final totalGiven =
+            totalsGiven == null ? 0 : (totalsGiven as num).toInt();
+        totals[personId] = GiftTotals(
+          personId: personId,
+          totalGivenAmount: totalGiven,
+          totalReceivedAmount: totalRecived,
+        );
       }
 
       return totals;

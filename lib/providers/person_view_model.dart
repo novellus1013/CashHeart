@@ -1,3 +1,4 @@
+import 'package:cash_heart/models/gift_totals.dart';
 import 'package:cash_heart/models/person.dart';
 import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
@@ -17,10 +18,13 @@ class PersonViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  Map<int, int> _totalsByPerson = {};
-  Map<int, int> get totalsByPerson => _totalsByPerson;
+  Map<int, GiftTotals> _totalsByPerson = {};
+  Map<int, GiftTotals> get totalsByPerson => _totalsByPerson;
 
-  int getTotalForPerson(int personId) => _totalsByPerson[personId] ?? 0;
+  int getTotalReceived(int personId) =>
+      _totalsByPerson[personId]?.totalReceivedAmount ?? 0;
+  int getTotalGiven(int personId) =>
+      _totalsByPerson[personId]?.totalGivenAmount ?? 0;
 
   Future<void> loadPersons() async {
     _isLoading = true;
