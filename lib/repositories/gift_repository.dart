@@ -94,9 +94,10 @@ class GiftRepository {
       final db = await _db;
 
       final result = await db.rawQuery('''
-      SELECT person_id, 
-      SUM(CASE WHEN direction = 1 THEN amount ELSE 0 END) AS total_received,
-      SUM(CASE WHEN direction = -1 THEN amount ELSE 0 END) AS total_given,
+      SELECT 
+        person_id, 
+        SUM(CASE WHEN direction = 1 THEN amount ELSE 0 END) AS total_received,
+        SUM(CASE WHEN direction = -1 THEN amount ELSE 0 END) AS total_given
       FROM gifts
       GROUP BY person_id
     ''');
