@@ -9,7 +9,7 @@ class AppDatabase {
   static final AppDatabase instance = AppDatabase._internal();
 
   static const _dbName = 'cash_heart.db';
-  static const _dbVersion = 1;
+  static const _dbVersion = 2;
 
   Database? _database;
 
@@ -32,7 +32,7 @@ class AppDatabase {
       path,
       version: _dbVersion,
       onCreate: _onCreate,
-      // onUpgrade: _onUpgarde,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -44,6 +44,7 @@ class AppDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         note TEXT,
+        category TEXT,
         created_at INTEGER NOT NULL
       );
     ''');
@@ -65,12 +66,12 @@ class AppDatabase {
     ''');
   }
 
-  // // DB 버전이 올라갈 때 호출되는 콜백.
-  // // 차후 컬럼 추가 / 테이블 추가 / 데이터 마이그레이션 등을 처리
-  // Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-  //   // 차후 버전이 변경되면 컬럼 추가 / 변경할 경우 사용
-  //   if (oldVersion < 2) {
-  //     await db.execute('ALTER TABLE ...');
-  //   }
-  // }
+  // DB 버전이 올라갈 때 호출되는 콜백.
+  // 차후 컬럼 추가 / 테이블 추가 / 데이터 마이그레이션 등을 처리
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // 차후 버전이 변경되면 컬럼 추가 / 변경할 경우 사용
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE persons ADD COLUMN category TEXT;');
+    }
+  }
 }
