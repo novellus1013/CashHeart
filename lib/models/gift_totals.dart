@@ -3,6 +3,8 @@ class GiftTotals {
   final int totalReceivedAmount;
   final int totalGivenAmount;
 
+  int get totalAmount => totalReceivedAmount - totalGivenAmount;
+
   GiftTotals({
     required this.personId,
     required this.totalGivenAmount,
