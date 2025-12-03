@@ -168,12 +168,13 @@ class _PersonBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final personVm = context.watch<PersonViewModel>();
-    final int totalAmount = personVm.getTotalForPerson(person.id!);
+    final int totalReceived = personVm.getTotalReceived(person.id!);
+    final int totalGiven = personVm.getTotalGiven(person.id!);
 
     final totalFormat =
-        MoneyFormatter.formatCurrency(totalAmount, 'ko_KR', '₩');
+        MoneyFormatter.formatCurrency(totalReceived, 'ko_KR', '₩');
 
-    final bool isHappy = totalAmount > 0 ? true : false;
+    final bool isHappy = totalReceived > 0 ? true : false;
 
     final Gradient backgroundGradient = isHappy
         ? const LinearGradient(
