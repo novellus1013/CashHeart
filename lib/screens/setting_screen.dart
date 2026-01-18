@@ -1,8 +1,10 @@
 import 'package:cash_heart/constants/colors.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
+import 'package:cash_heart/providers/theme_provider.dart';
 import 'package:cash_heart/screens/policy_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -22,7 +24,6 @@ class _SettingScreenState extends State<SettingScreen> {
               title: Text(
                 '문의하기',
                 style: TextStyle(
-                  color: Colors.black,
                   fontWeight: FontWeight.bold,
                   fontSize: Sizes.size20,
                 ),
@@ -49,12 +50,13 @@ class _SettingScreenState extends State<SettingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.isDarkMode;
+
     return Scaffold(
-      backgroundColor: Color(0xFFF8F6F5),
       appBar: AppBar(
-        backgroundColor: Color(0xFFF8F6F5),
         title: Text(
-          'Settings',
+          '설정',
           style: TextStyle(
             fontSize: Sizes.size18,
             fontWeight: FontWeight.bold,
@@ -68,12 +70,12 @@ class _SettingScreenState extends State<SettingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Gaps.v24,
-            _SectionTitle(title: 'General'),
+            _SectionTitle(title: '일반'),
             _SettingsCard(
               children: [
                 _SettingsItem(
                   icon: Icons.currency_yen,
-                  title: 'Currency',
+                  title: '통화',
                   trailing: 'KRW (₩)',
                   isChevron: false,
                   onTap: () {},
@@ -81,26 +83,35 @@ class _SettingScreenState extends State<SettingScreen> {
                 _Divider(),
                 _SettingsItem(
                   icon: Icons.translate,
-                  title: 'Language',
+                  title: '언어',
                   trailing: '한국어',
                   isChevron: false,
                   onTap: () {},
                 ),
+                _Divider(),
+                _SettingsToggleItem(
+                  icon: isDark ? Icons.dark_mode : Icons.light_mode,
+                  title: '다크 모드',
+                  value: isDark,
+                  onChanged: (value) {
+                    themeProvider.setDarkMode(value);
+                  },
+                ),
               ],
             ),
             Gaps.v24,
-            _SectionTitle(title: 'Support & Legal'),
+            _SectionTitle(title: '지원 및 법적 고지'),
             _SettingsCard(
               children: [
                 _SettingsItem(
                   icon: Icons.help_outline,
-                  title: 'Contact Support',
+                  title: '문의하기',
                   onTap: () => _showInfoDialog(context),
                 ),
                 _Divider(),
                 _SettingsItem(
                   icon: Icons.policy_outlined,
-                  title: 'Privacy Policy',
+                  title: '개인정보 처리방침',
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -113,7 +124,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 _Divider(),
                 _SettingsItem(
                   icon: Icons.gavel_outlined,
-                  title: 'Terms of Service',
+                  title: '이용약관',
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -128,7 +139,7 @@ class _SettingScreenState extends State<SettingScreen> {
             Gaps.v24,
             Center(
               child: Text(
-                'Version $_version',
+                '버전 $_version',
                 style: TextStyle(
                   fontSize: Sizes.size12,
                   color: Colors.grey.shade500,
@@ -185,7 +196,7 @@ class _SettingsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(Sizes.size12),
         boxShadow: [
           BoxShadow(
@@ -217,7 +228,10 @@ class _SettingsItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconBgColor = Color(0xFFF8F6F5).withValues(alpha: 0.5);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconBgColor = isDark
+        ? Colors.grey.shade800
+        : const Color(0xFFF8F6F5).withValues(alpha: 0.5);
 
     return Material(
       color: Colors.transparent,
@@ -273,6 +287,69 @@ class _SettingsItem extends StatelessWidget {
   }
 }
 
+class _SettingsToggleItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SettingsToggleItem({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconBgColor = isDark
+        ? Colors.grey.shade800
+        : const Color(0xFFF8F6F5).withValues(alpha: 0.5);
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: Sizes.size16,
+        vertical: Sizes.size8,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: Sizes.size36,
+            height: Sizes.size36,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: Sizes.size20, color: primaryColor),
+          ),
+          Gaps.h16,
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: Sizes.size16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            onChanged: onChanged,
+            activeTrackColor: primaryColor.withValues(alpha: 0.5),
+            thumbColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return primaryColor;
+              }
+              return Colors.grey.shade400;
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Divider extends StatelessWidget {
   const _Divider();
 
@@ -281,7 +358,7 @@ class _Divider extends StatelessWidget {
     return Divider(
       height: 1,
       thickness: 1,
-      color: Colors.black.withValues(alpha: 0.05),
+      color: Theme.of(context).dividerColor,
     );
   }
 }
