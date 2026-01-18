@@ -197,7 +197,7 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
                         backgroundColor: const Color(0xFFFFF5F3),
                         thumbColor: _currentDirection == GiftDirection.received
                             ? primaryColor
-                            : cashBlueColor,
+                            : secondaryColor,
                         padding: const EdgeInsets.all(3),
                         groupValue: _currentDirection,
                         children: {

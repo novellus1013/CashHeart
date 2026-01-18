@@ -1,4 +1,5 @@
 import 'package:cash_heart/models/person.dart';
+import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:cash_heart/services/app_database.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -57,6 +58,26 @@ class PersonRepository {
       );
     } catch (e, st) {
       debugPrint('updatePerson error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  Future<int> deletePerson(int id) async {
+    try {
+      final db = await _db;
+
+      // 먼저 해당 person의 모든 gift를 삭제
+      await GiftRepository.instance.deleteGiftsByPersonId(id);
+
+      // 그 다음 person 삭제
+      return await db.delete(
+        'persons',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } catch (e, st) {
+      debugPrint('deletePerson error: $e');
       await Sentry.captureException(e, stackTrace: st);
       rethrow;
     }

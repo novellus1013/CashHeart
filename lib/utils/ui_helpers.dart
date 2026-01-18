@@ -11,23 +11,16 @@ Future<bool?> showWarningPopDialog(BuildContext context) async {
             title: Text(
               '정말 나가시겠습니까?',
               style: TextStyle(
-                color: Colors.black,
                 fontWeight: FontWeight.bold,
                 fontSize: Sizes.size20,
               ),
             ),
-            content: Text(
+            content: const Text(
               '지금까지 입력한 모든 내용이 사라집니다.',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-              ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.grey.shade600,
-                ),
                 child: Text(
                   '취소',
                   style: TextStyle(

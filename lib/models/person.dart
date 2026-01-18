@@ -2,12 +2,14 @@ class Person {
   int? id; //id 가 auto increment 인 경우 db가 자동 생성해주기 때문에 id가 null일수 있음
   String name;
   String? note;
+  String? category;
   int? createdAt;
 
   Person({
     this.id,
     required this.name,
     this.note,
+    this.category,
     this.createdAt,
   });
 
@@ -17,6 +19,7 @@ class Person {
         id: map['id'],
         name: map['name'],
         note: map['note'],
+        category: map['category'],
         createdAt: map['created_at']);
   }
 
@@ -24,8 +27,9 @@ class Person {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'note': note,
       'name': name,
+      'note': note,
+      'category': category,
       'created_at': createdAt,
     };
   }

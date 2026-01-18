@@ -1,3 +1,4 @@
+import 'package:cash_heart/constants/colors.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/models/person.dart';
@@ -31,6 +32,8 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
 
   bool _initialized = false;
 
+  String? _selectedCategory = '그외';
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -43,6 +46,7 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
       if (existing != null) {
         _personNameController.text = existing.name;
         _personNoteController.text = existing.note ?? '';
+        _selectedCategory = existing.category ?? '그외';
       }
     }
 
@@ -61,10 +65,13 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
         ? null
         : _personNoteController.text.trim();
 
+    final category = _selectedCategory;
+
     final person = Person(
       id: _isEdit ? widget.personId : null,
       name: name,
       note: note,
+      category: category,
     );
 
     if (_isEdit) {
@@ -164,12 +171,77 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                       return null;
                     },
                   ),
+                  Gaps.v10,
+                  Text('카테고리'),
+                  Gaps.v10,
+                  CategoryChips(
+                    selectedCategory: _selectedCategory,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value != null) {
+                          _selectedCategory = value;
+                        }
+                      });
+                    },
+                  )
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class CategoryChips extends StatelessWidget {
+  final String? selectedCategory;
+  final ValueChanged<String?> onChanged;
+
+  const CategoryChips({
+    super.key,
+    this.selectedCategory,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    List<String> categories = ['가족', '친구', '직장', '지인', '그외'];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Wrap(
+      spacing: Sizes.size8,
+      children: categories.map((category) {
+        bool isSelected = selectedCategory == category;
+
+        return ChoiceChip(
+          checkmarkColor: Colors.white,
+          padding: EdgeInsets.symmetric(
+            horizontal: Sizes.size8,
+            vertical: Sizes.size8,
+          ),
+          label: Text(
+            category,
+            style: TextStyle(
+              color: isSelected
+                  ? Colors.white
+                  : (isDark ? Colors.white70 : Colors.black87),
+            ),
+          ),
+          selectedColor: primaryColor,
+          backgroundColor: isDark ? Colors.grey.shade800 : null,
+          side: isDark && !isSelected
+              ? BorderSide(color: Colors.grey.shade600)
+              : null,
+          selected: isSelected,
+          onSelected: (selected) {
+            if (selected) {
+              onChanged(category);
+            }
+            // Don't allow deselection - category is required
+          },
+        );
+      }).toList(),
     );
   }
 }
