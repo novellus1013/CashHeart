@@ -19,8 +19,8 @@ void main() async {
   await initializeDateFormatting();
 
   // 환경 설정 (dev / prod) - 배포 시 AppConfig.setProd()로 변경!
-  AppConfig.setDev();
-  // AppConfig.setProd();
+  // AppConfig.setDev();
+  AppConfig.setProd();
 
   // ThemeProvider 초기화 (SharedPreferences 로드)
   _themeProvider = await ThemeProvider.create();
