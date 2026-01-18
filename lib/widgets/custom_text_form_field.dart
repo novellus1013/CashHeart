@@ -40,7 +40,7 @@ class CustomTextFormField extends StatelessWidget {
         )),
         focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(
-          color: cashBlueColor,
+          color: secondaryColor,
         )),
       ),
       validator: validator,

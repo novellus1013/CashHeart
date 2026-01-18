@@ -70,6 +70,22 @@ class GiftRepository {
     }
   }
 
+  /// 특정 person의 모든 gift를 삭제
+  Future<int> deleteGiftsByPersonId(int personId) async {
+    try {
+      final db = await _db;
+      return await db.delete(
+        'gifts',
+        where: 'person_id = ?',
+        whereArgs: [personId],
+      );
+    } catch (e, st) {
+      debugPrint('deleteGiftsByPersonId error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
   Future<List<Gift>> getGiftsListByPersonId(int personId) async {
     try {
       final db = await _db;
@@ -123,6 +139,134 @@ class GiftRepository {
       return totals;
     } catch (e, st) {
       debugPrint('getTotalsByPerson error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  Future<int> getTotalAmount() async {
+    try {
+      final db = await _db;
+      final result = await db.rawQuery('''
+      SELECT SUM(amount * direction) AS total
+      FROM gifts
+    ''');
+
+      final rawTotal = result.first['total'];
+      return rawTotal == null ? 0 : (rawTotal as num).toInt();
+    } catch (e, st) {
+      debugPrint('getTotalAmount error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  Future<int> getTotalGiven() async {
+    try {
+      final db = await _db;
+      final result = await db.rawQuery('''
+      SELECT SUM(amount) AS total
+      FROM gifts
+      WHERE direction = -1
+    ''');
+
+      final rawTotal = result.first['total'];
+      return rawTotal == null ? 0 : (rawTotal as num).toInt();
+    } catch (e, st) {
+      debugPrint('getTotalGiven error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  Future<int> getTotalReceived() async {
+    try {
+      final db = await _db;
+      final result = await db.rawQuery('''
+      SELECT SUM(amount) AS total
+      FROM gifts
+      WHERE direction = 1
+    ''');
+
+      final rawTotal = result.first['total'];
+      return rawTotal == null ? 0 : (rawTotal as num).toInt();
+    } catch (e, st) {
+      debugPrint('getTotalReceived error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  Future<Map<int, Gift>> getLastGiftByPerson() async {
+    try {
+      final db = await _db;
+      final result = await db.rawQuery('''
+        SELECT g.*
+        FROM gifts g
+        INNER JOIN (
+          SELECT person_id, MAX(date) AS max_date
+          FROM gifts
+          GROUP BY person_id
+        ) latest ON g.person_id = latest.person_id AND g.date = latest.max_date
+      ''');
+
+      final Map<int, Gift> lastGifts = {};
+      for (final row in result) {
+        final gift = Gift.fromMap(row);
+        lastGifts[gift.personId] = gift;
+      }
+
+      return lastGifts;
+    } catch (e, st) {
+      debugPrint('getLastGiftByPerson error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  /// 월별 given/received 합계를 반환합니다.
+  /// 반환값: Map where key is 'yyyy-MM' format
+  Future<Map<String, ({int given, int received})>> getMonthlyTotals() async {
+    try {
+      final db = await _db;
+      final result = await db.rawQuery('''
+        SELECT
+          strftime('%Y-%m', date / 1000, 'unixepoch') AS month,
+          SUM(CASE WHEN direction = -1 THEN amount ELSE 0 END) AS total_given,
+          SUM(CASE WHEN direction = 1 THEN amount ELSE 0 END) AS total_received
+        FROM gifts
+        GROUP BY month
+        ORDER BY month DESC
+        LIMIT 12
+      ''');
+
+      final Map<String, ({int given, int received})> monthlyTotals = {};
+      for (final row in result) {
+        final month = row['month'] as String;
+        final given = (row['total_given'] as num?)?.toInt() ?? 0;
+        final received = (row['total_received'] as num?)?.toInt() ?? 0;
+        monthlyTotals[month] = (given: given, received: received);
+      }
+
+      return monthlyTotals;
+    } catch (e, st) {
+      debugPrint('getMonthlyTotals error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  /// 모든 Gift 목록을 반환합니다.
+  Future<List<Gift>> getAllGifts() async {
+    try {
+      final db = await _db;
+      final result = await db.query(
+        'gifts',
+        orderBy: 'date DESC',
+      );
+      return result.map((row) => Gift.fromMap(row)).toList();
+    } catch (e, st) {
+      debugPrint('getAllGifts error: $e');
       await Sentry.captureException(e, stackTrace: st);
       rethrow;
     }

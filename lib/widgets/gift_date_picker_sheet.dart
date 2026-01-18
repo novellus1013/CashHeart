@@ -129,7 +129,7 @@ class _GiftDatePickerSheetState extends State<GiftDatePickerSheet> {
               },
               calendarStyle: CalendarStyle(
                 todayDecoration: BoxDecoration(
-                  color: cashBlueColor.withValues(
+                  color: secondaryColor.withValues(
                     alpha: 0.2,
                   ),
                   shape: BoxShape.circle,

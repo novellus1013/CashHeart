@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 const primaryColor = Color(0xffFF6258);
-const cashBlueColor = Color(0xff027DFD);
+const secondaryColor = Color(0xff027DFD);
 
 /// 카테고리별 색상
 const Map<String, Color> categoryColors = {

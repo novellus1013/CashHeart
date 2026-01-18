@@ -49,17 +49,18 @@ class GiftViewModel extends ChangeNotifier {
   }
 
   //filter 및 ui 반영을 위한 getter 정의
-  int get totalAmount {
+  //personId에 따른 금액
+  int get totalAmountById {
     return _gifts.fold(0, (previous, g) => previous + g.signedAmount);
   }
 
-  int get totalReceived {
+  int get totalReceivedById {
     return _gifts
         .where((g) => g.direction == GiftDirection.received)
         .fold(0, (previous, g) => previous + g.amount);
   }
 
-  int get totalGiven {
+  int get totalGivenById {
     return _gifts
         .where((g) => g.direction == GiftDirection.given)
         .fold(0, (previous, g) => previous + g.amount);

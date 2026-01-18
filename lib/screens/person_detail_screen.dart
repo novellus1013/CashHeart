@@ -6,7 +6,9 @@ import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/providers/gift_view_model.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/screens/add_edit_gift_screen.dart';
+import 'package:cash_heart/screens/add_edit_person_screen.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
+import 'package:cash_heart/widgets/total_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
@@ -24,38 +26,86 @@ class PersonDetailScreen extends StatefulWidget {
 class _PersonDetailScreenState extends State<PersonDetailScreen> {
   int selectedIndex = 0;
 
+  Future<void> _onDeletePerson(
+      BuildContext context, PersonViewModel personVm) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          '정말 삭제하시겠습니까?',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: Sizes.size20,
+          ),
+        ),
+        content: Text(
+          '이 사람과 관련된 모든 거래 내역이 함께 삭제됩니다. 한 번 삭제하면 돌이킬 수 없습니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey.shade600,
+            ),
+            child: Text(
+              '취소',
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+            ),
+            child: Text(
+              '삭제하기',
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true) {
+      await personVm.deletePerson(widget.personId);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final personVm = context.watch<PersonViewModel>();
     final giftVm = context.watch<GiftViewModel>();
 
-    final personName = personVm.getPersonById(widget.personId)!.name;
+    final person = personVm.getPersonById(widget.personId);
+
+    // 삭제 후 rebuild 시 person이 null일 수 있음
+    if (person == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final personName = person.name;
 
     final allGifts = giftVm.gifts;
     final givenGifts = giftVm.giftGivenList;
     final receivedGifts = giftVm.giftReceivedList;
-    final isHappy = giftVm.totalAmount > 0 ? true : false;
-
-    // final randomEventMessage = getRandomEventMessage(giftVm.totalAmount);
+    final isPlus = giftVm.totalAmountById > 0 ? true : false;
 
     final totalAmountFormat =
-        MoneyFormatter.formatCurrency(giftVm.totalAmount, 'ko_KR', '₩ ');
+        MoneyFormatter.formatCurrency(giftVm.totalAmountById, 'ko_KR', '₩ ');
     final totalReceivedFormat =
-        MoneyFormatter.formatCurrency(giftVm.totalReceived, 'ko_KR', '₩ ');
+        MoneyFormatter.formatCurrency(giftVm.totalReceivedById, 'ko_KR', '₩ ');
     final totalGivenFormat =
-        MoneyFormatter.formatCurrency(giftVm.totalGiven, 'ko_KR', '₩ ');
-
-    final Gradient backgroundGradient = isHappy
-        ? const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [primaryColor, Color(0xFFFB9F35)],
-          )
-        : const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [cashBlueColor, Color(0xFF36D1DC)],
-          );
+        MoneyFormatter.formatCurrency(giftVm.totalGivenById, 'ko_KR', '₩ ');
 
     final List<String> tabs = ["총액", "받은 돈", "준 돈"];
 
@@ -84,29 +134,43 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
+        centerTitle: false,
         title: Text(
           personName,
         ),
-        //TODO: card 또는 screen 샷을 다른 유저들에게 공유할 수 있도록 하기
-        // actions: [
-        //   ElevatedButton(
-        //     onPressed: () {
-        //       Navigator.of(context)
-        //           .push(MaterialPageRoute(builder: (context) => HomeScreen()));
-        //     },
-        //     child: Text(
-        //       'Share',
-        //     ),
-        //   ),
-        //   Gaps.h10,
-        // ],
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => AddEditPersonScreen(
+                    personId: widget.personId,
+                  ),
+                ),
+              );
+            },
+            icon: Icon(
+              Icons.edit,
+              color: secondaryColor,
+            ),
+            tooltip: '수정하기',
+          ),
+          IconButton(
+            onPressed: () => _onDeletePerson(context, personVm),
+            icon: Icon(
+              Icons.delete,
+              color: primaryColor,
+            ),
+            tooltip: '삭제하기',
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         // FAB의 Hero 위젯 충돌 오류 방지
         heroTag: null,
-        backgroundColor: Color(0xffFF6258),
+        backgroundColor: primaryColor,
         shape: CircleBorder(),
+        tooltip: 'Add Transaction',
         onPressed: () {
           final giftVm = context.read<GiftViewModel>();
 
@@ -123,8 +187,8 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
           );
         },
         child: Icon(
-          Icons.add,
-          size: 28.0,
+          Icons.playlist_add,
+          size: 32.0,
           color: Colors.white,
         ),
       ),
@@ -136,138 +200,80 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
           child: Column(
             children: [
               Gaps.v10,
-              Container(
-                padding: EdgeInsets.symmetric(
-                    horizontal: Sizes.size20, vertical: Sizes.size24),
-                decoration: BoxDecoration(
-                    gradient: backgroundGradient,
-                    borderRadius: BorderRadius.circular(Sizes.size20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        spreadRadius: 5,
-                      ),
-                    ]),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '총액',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: Sizes.size16,
-                            letterSpacing: 1.4,
-                          ),
-                        ),
-                        Icon(
-                          Icons.account_balance_wallet_outlined,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                    Gaps.v10,
-                    Text(
-                      totalAmountFormat,
-                      style: TextStyle(
-                        fontSize: Sizes.size36,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Gaps.v20,
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _AmountTypeBox(
-                              received: true, amount: totalReceivedFormat),
-                        ),
-                        Container(
-                          color: Colors.white,
-                          width: Sizes.size1,
-                          height: Sizes.size48,
-                        ),
-                        Expanded(
-                          child: _AmountTypeBox(
-                              received: false, amount: totalGivenFormat),
-                        ),
-                      ],
-                    ),
-                    // Gaps.v10,
-                    // Text(
-                    //   randomEventMessage,
-                    //   style: TextStyle(
-                    //     fontSize: Sizes.size14,
-                    //     color: Colors.grey,
-                    //   ),
-                    // ),
-                  ],
-                ),
-              ),
+              TotalCard(
+                  isPlus: isPlus,
+                  totalAmountFormat: totalAmountFormat,
+                  totalReceivedFormat: totalReceivedFormat,
+                  totalGivenFormat: totalGivenFormat),
               Gaps.v20,
 
               // 탭 필터
-              Container(
-                padding: EdgeInsets.all(Sizes.size4),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(Sizes.size20),
-                ),
-                child: Row(
-                  children: List.generate(tabs.length, (index) {
-                    final isSelected = selectedIndex == index;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedIndex = index;
-                          });
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(vertical: Sizes.size10),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected ? Colors.white : Colors.transparent,
-                            borderRadius: BorderRadius.circular(Sizes.size16),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 5,
-                                      spreadRadius: 1,
-                                    )
-                                  ]
-                                : null,
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            tabs[index],
-                            style: TextStyle(
-                              fontSize: Sizes.size14,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                              color: isSelected
-                                  ? Colors.black
-                                  : Colors.grey.shade600,
+              Builder(
+                builder: (context) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                  return Container(
+                    padding: EdgeInsets.all(Sizes.size4),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(Sizes.size20),
+                    ),
+                    child: Row(
+                      children: List.generate(tabs.length, (index) {
+                        final isSelected = selectedIndex == index;
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedIndex = index;
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: Sizes.size10),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Theme.of(context).cardColor
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(Sizes.size16),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color:
+                                              Colors.black.withValues(alpha: 0.05),
+                                          blurRadius: 5,
+                                          spreadRadius: 1,
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                tabs[index],
+                                style: TextStyle(
+                                  fontSize: Sizes.size14,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: isSelected
+                                      ? (isDark ? Colors.white : Colors.black)
+                                      : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
+                        );
+                      }),
+                    ),
+                  );
+                },
               ),
               Gaps.v8,
               Text(
                 '내역을 오른쪽으로 당기면 수정이나 삭제가 가능해요!',
                 style: TextStyle(
                   fontSize: Sizes.size12,
-                  color: Colors.grey.shade600,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey.shade400
+                      : Colors.grey.shade600,
                 ),
               ),
               Gaps.v10,
@@ -291,15 +297,15 @@ class _DetailList extends StatelessWidget {
 
   void _onEditGift(BuildContext context, Gift gift) {
     final giftVm = context.read<GiftViewModel>();
-    final personName =
-        context.read<PersonViewModel>().getPersonById(gift.personId)!.name;
+    final person = context.read<PersonViewModel>().getPersonById(gift.personId);
+    if (person == null) return;
 
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider.value(
           value: giftVm,
           child: AddEditGiftScreen(
-            personName: personName,
+            personName: person.name,
             personId: gift.personId,
             giftId: gift.id,
           ),
@@ -359,6 +365,8 @@ class _DetailList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Expanded(
       child: ListView.separated(
         //최하단의 list_item이 floating_action_bar에 가리지 않도록 패딩 추가
@@ -393,7 +401,7 @@ class _DetailList extends StatelessWidget {
                   ),
                   SlidableAction(
                     onPressed: (_) => _onEditGift(context, data),
-                    backgroundColor: cashBlueColor,
+                    backgroundColor: secondaryColor,
                     foregroundColor: Colors.white,
                     icon: Icons.edit,
                     label: '수정하기',
@@ -411,10 +419,10 @@ class _DetailList extends StatelessWidget {
                     horizontal: Sizes.size16,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                         blurRadius: 10,
                         spreadRadius: 5,
                       )
@@ -447,7 +455,7 @@ class _DetailList extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: Sizes.size14,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                                color: isDark ? Colors.white : Colors.black87,
                               ),
                             ),
                             Gaps.v4,
@@ -455,7 +463,7 @@ class _DetailList extends StatelessWidget {
                               dateText,
                               style: TextStyle(
                                 fontSize: Sizes.size12,
-                                color: Colors.grey.shade500,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
                               ),
                             ),
                           ],
@@ -468,7 +476,7 @@ class _DetailList extends StatelessWidget {
                           fontSize: Sizes.size16,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.1,
-                          color: isReceived ? primaryColor : cashBlueColor,
+                          color: isReceived ? primaryColor : secondaryColor,
                         ),
                       ),
                     ],
@@ -479,58 +487,6 @@ class _DetailList extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-
-class _AmountTypeBox extends StatelessWidget {
-  final bool received;
-  final String amount;
-
-  const _AmountTypeBox({
-    required this.received,
-    required this.amount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment:
-              received ? MainAxisAlignment.start : MainAxisAlignment.end,
-          children: [
-            Icon(
-                received
-                    ? Icons.arrow_upward_outlined
-                    : Icons.arrow_downward_outlined,
-                size: Sizes.size14,
-                color: Colors.white),
-            Gaps.h4,
-            Text(
-              received ? '받은 돈' : '준 돈',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: Sizes.size14,
-              ),
-            ),
-          ],
-        ),
-        Gaps.v4,
-        Align(
-          alignment: received ? Alignment.centerLeft : Alignment.centerRight,
-          child: Text(
-            amount,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: Sizes.size16,
-              fontWeight: FontWeight.w700,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        )
-      ],
     );
   }
 }
