@@ -2,7 +2,21 @@
 
 경조사비를 쉽고 체계적으로 관리할 수 있는 Flutter 기반 모바일 애플리케이션입니다.
 
+## 다운로드 
+
+| App Store | Google Play |
+|---|---|
+| [<img width="120" height="40" alt="App Store" src="https://github.com/user-attachments/assets/2d85e984-1949-4262-9aae-63f36ca00726" />](https://apps.apple.com/kr/app/cashheart-%EA%B2%BD%EC%A1%B0%EC%82%AC%EB%B9%84-%EA%B8%B0%EB%A1%9D-%EA%B4%80%EB%A6%AC/id6755832129) | [<img width="120" height="40" alt="Google Play" src="https://github.com/user-attachments/assets/bcc419e6-1d8c-44bf-b5df-1454f3c89df9" />](https://play.google.com/store/apps/details?id=co.novelus.cashheart) |
+
 ## 앱 소개
+
+### 화면
+<p align="center">
+  <img width="22%" height="2532" alt="home" src="https://github.com/user-attachments/assets/97ed582d-c666-43ba-9a7c-fd3c193b68c4" />
+  <img width="22%" height="2532" alt="detail" src="https://github.com/user-attachments/assets/47c6de8f-14a5-46b4-96c2-37c6b2af42a0" />
+  <img width="22%" height="2532" alt="report" src="https://github.com/user-attachments/assets/6f584f24-b138-4f8f-9b9e-fc2ff1b4f1b1" />
+  <img width="22%" height="2532" alt="settings" src="https://github.com/user-attachments/assets/33cf2248-57e8-4b97-b332-6071ac48ceaa" />
+</p>
 
 ### 컨셉
 CashHeart는 경조사 문화에서 주고받는 축의금, 조의금 등의 금전 거래를 기록하고 관리하는 앱입니다.
@@ -117,5 +131,6 @@ AppConfig.setDev();
 // 프로덕션 환경: Sentry 에러 모니터링 활성화
 AppConfig.setProd();
 ```
+
 ---
     
