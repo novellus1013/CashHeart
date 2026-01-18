@@ -98,18 +98,18 @@ class ReportViewModel extends ChangeNotifier {
   Future<void> _loadMonthlyData() async {
     final monthlyTotals = await _giftRepository.getMonthlyTotals();
     final monthLabels = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+      '1월',
+      '2월',
+      '3월',
+      '4월',
+      '5월',
+      '6월',
+      '7월',
+      '8월',
+      '9월',
+      '10월',
+      '11월',
+      '12월'
     ];
 
     // 최근 6개월 데이터 생성
