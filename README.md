@@ -12,10 +12,10 @@
 
 ### 화면
 <p align="center">
-  <img width="22%" height="2532" alt="home" src="https://github.com/user-attachments/assets/97ed582d-c666-43ba-9a7c-fd3c193b68c4" />
-  <img width="22%" height="2532" alt="detail" src="https://github.com/user-attachments/assets/47c6de8f-14a5-46b4-96c2-37c6b2af42a0" />
-  <img width="22%" height="2532" alt="report" src="https://github.com/user-attachments/assets/6f584f24-b138-4f8f-9b9e-fc2ff1b4f1b1" />
-  <img width="22%" height="2532" alt="settings" src="https://github.com/user-attachments/assets/33cf2248-57e8-4b97-b332-6071ac48ceaa" />
+  <img width="22%" height="2532" alt="home" src="https://github.com/user-attachments/assets/7216c3da-86a4-49fd-9ccc-eefdc6ca75fe" />
+  <img width="22%" height="2532" alt="detail" src="https://github.com/user-attachments/assets/2bcd8623-24a7-4a02-be65-1246ddebb052" />
+  <img width="22%" height="2532" alt="report" src="https://github.com/user-attachments/assets/d04b536f-2c7c-4a00-8074-9298aa4c4e0a" />
+  <img width="22%" height="2532" alt="settings" src="https://github.com/user-attachments/assets/a1752b40-ce35-4891-b773-12ca98a2eb37" />
 </p>
 
 ### 컨셉
