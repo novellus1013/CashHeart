@@ -31,7 +31,7 @@ class _ReportScreenState extends State<ReportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          '리포트',
+          '통계 보기',
           style: TextStyle(
             fontSize: Sizes.size18,
             fontWeight: FontWeight.bold,
@@ -226,7 +226,7 @@ class _TrendAnalysisSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  '추세 분석',
+                  '최근 6개월 거래 내역',
                   style: TextStyle(
                     fontSize: Sizes.size18,
                     fontWeight: FontWeight.bold,
@@ -619,7 +619,7 @@ class _TopGratitudeSection extends StatelessWidget {
                 const Icon(Icons.diversity_1, color: primaryColor, size: 20),
                 Gaps.h8,
                 const Text(
-                  '가장 많이 받은 분',
+                  '받은 금액 순위',
                   style: TextStyle(
                     fontSize: Sizes.size18,
                     fontWeight: FontWeight.bold,
@@ -652,9 +652,7 @@ class _TopGratitudeSection extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// Top Generosity Section
-// ============================================================================
+// 가장 많이 보낸 사람
 class _TopGenerositySection extends StatelessWidget {
   final List<PersonBalance> topGenerosity;
 
@@ -676,7 +674,7 @@ class _TopGenerositySection extends StatelessWidget {
                     color: secondaryColor, size: 20),
                 Gaps.h8,
                 const Text(
-                  '가장 많이 보낸 분',
+                  '보낸 금액 순위',
                   style: TextStyle(
                     fontSize: Sizes.size18,
                     fontWeight: FontWeight.bold,
