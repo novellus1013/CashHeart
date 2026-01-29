@@ -132,5 +132,16 @@ AppConfig.setDev();
 AppConfig.setProd();
 ```
 
----
-    
+## 기여하기
+
+기여는 언제나 환영합니다! 개선 사항에 대한 제안이 있거나 버그를 발견하시면, 부담 없이 이슈를 열거나 풀 리퀘스트(Pull Request)를 보내주세요.
+
+1. 프로젝트를 **Fork** 합니다.
+2. 새로운 기능 개발을 위한 브랜치를 생성합니다. (`git checkout -b feature/AmazingFeature`)
+3. 변경 사항을 **Commit** 합니다. (`git commit -m 'Add some AmazingFeature'`)
+4. 작업한 브랜치에 **Push** 합니다. (`git push origin feature/AmazingFeature`)
+5. **Pull Request**를 요청합니다.
+
+## 라이센스
+
+이 프로젝트는 MIT 라이센스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조해 주세요.    
