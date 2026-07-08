@@ -45,7 +45,6 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
   GiftDirection _currentDirection = GiftDirection.received;
 
   DateTime? _selectedDay = DateTime.now();
-  DateTime _focusedDay = DateTime.now();
 
   final personNoteRegex = RegExp(r'^[a-zA-Z가-힣\s]+$');
 
@@ -64,7 +63,6 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
         _currentCategory = existing.category;
         //timestamp(ms)를 DateTime로
         _selectedDay = DateTime.fromMillisecondsSinceEpoch(existing.date);
-        _focusedDay = _selectedDay!;
         _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDay!);
         _giftNoteController.text = existing.note;
       }
@@ -125,7 +123,6 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
     if (selected != null) {
       setState(() {
         _selectedDay = selected;
-        _focusedDay = selected;
         _dateController.text = DateFormat('yyyy-MM-dd').format(selected);
       });
     }

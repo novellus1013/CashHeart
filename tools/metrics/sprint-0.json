@@ -1,0 +1,17 @@
+{
+  "sprint": 0,
+  "baseline": {
+    "captured_at": "2026-07-08",
+    "dart_loc": 4905,
+    "dart_files": 28,
+    "test_files": 1,
+    "coverage_pct": 0,
+    "analyze": {
+      "error": 0,
+      "warning": 1,
+      "info": 3
+    },
+    "note": "v2.0 착수 시점 baseline. warning 1건(_focusedDay unused_field)은 Sprint 0에서 제거하여 게이트 green 확보. 이후 commits[]에 커밋 단위 지표 append."
+  },
+  "commits": []
+}

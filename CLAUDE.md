@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## About
 
-CashHeart는 경조사비(축의금·조의금 등)를 기록·관리하는 Flutter 모바일 앱입니다. App Store와 Google Play에 배포되어 있습니다.
+CashHeart는 경조사비(축의금·조의금 등)를 기록·관리하는 Flutter 모바일 앱입니다. App Store와 Google Play Store에 MVP 버전이 배포되어 있습니다.
 
 ## Commands
 
@@ -85,3 +85,122 @@ gifts   (id, person_id, amount, direction, category, note, date, created_at)
 ## Error Monitoring
 
 Repository의 모든 DB 작업은 `try/catch`로 감싸며 `Sentry.captureException`으로 에러를 보고합니다 (prod 전용). dev 환경에서는 `debugPrint`만 출력됩니다.
+
+---
+
+# v2.0 작업 컨텍스트
+
+현재 **v2.0.0 큰 기능 확장** 진행 중. PRFAQ + UI 사양 완료. Sprint 0–6으로 분해.
+
+### 산출물 위치 (로컬 참고용, gitignore 처리)
+
+- `_bmad-output/planning-artifacts/prfaq-CashHeart-distillate.md` — PRFAQ 압축
+- `_bmad-output/planning-artifacts/ui-prompt-CashHeart-v2.md` — UI 사양
+- `design_handoff_cashheart/README.md` — Claude Design 9 화면 prototype
+- sprint plan 원본: `~/.claude/plans/users-js-dev-docs-legacy-refactor-plan-quizzical-journal.md`
+
+## 어필 4축 (커리어 어필 목적)
+
+v2.0 작업의 핵심. 모든 sprint는 이 중 1개 이상에 기여해야 한다.
+
+1. **AI 도입의 수치적 증명** ⭐ — 모든 sprint가 측정 지표 누적에 기여
+2. Flutter 설계/아키텍처 — Sprint 1–3 집중
+3. Claude Code 활용 (skills/subagents/hooks/MCP) — Sprint 0 인프라
+4. Test + Architecture + CI/CD + Code Review — Sprint 0 베이스라인, 모든 sprint 게이트
+
+## AI 효과 측정 지표
+
+**생산성** (`tools/metrics/`에 commit 단위 누적)
+
+- LLM 생성/가공 LOC 비율 (commit-msg hook이 자동 기록)
+- Story 1개당 소요 시간 (bmad-dev-story 시작/종료)
+
+**품질**
+
+- `flutter analyze` warning 카운트 (commit 단위 추이)
+- 테스트 커버리지 (lcov 누적)
+- 버그 발견율 (issue 라벨 + Sentry crash rate)
+
+출시 시점에 Sprint 0 베이스라인 vs 출시 직전 비교 그래프 산출 → 어필 1번의 정량 근거.
+
+## Sprint Workflow
+
+각 sprint 표준 흐름:
+
+1. `bmad-dev-story`로 story 분해
+2. LLM이 코드 작성 (사람은 watch)
+3. pre-commit hook → `flutter analyze` 차단
+4. `/codex review` adversarial 게이트
+5. **사용자 검수 게이트** (sprint별로 명시된 시점만 — 톤·데이터·정책·시안)
+6. `feat/sprint-{N}-{topic}` → `dev` PR
+7. hook이 측정 지표를 `tools/metrics/sprint-{N}.json`에 누적
+
+### Git Branch
+
+- `main` 출시 가능 (App Store / Play Store 동기화)
+- `dev` 통합
+- `feat/sprint-{N}-{topic}` 작업
+
+### Sprint 사용자 직접 개입 시점 (sprint plan에서 발췌)
+
+- Sprint 0: CLAUDE.md 컨벤션 검토 + hook 시연 동의 (← 지금 단계)
+- Sprint 1: 실 기기 v1.1 → v2.0 데이터 보존 검증
+- Sprint 2: 다크모드 톤 검수
+- Sprint 3: 비난조 카피 검수, 균형 시각화 톤 확정
+- Sprint 4: 9 카드 변형 시안 검수 + AI 메시지 A/B 결과 검토
+- Sprint 5: iOS App Store Guideline 2.4.5 본인 검토 + 강제/권장 업데이트 정책 결정
+- Sprint 6: ASO 자산 직접 작성, 출시 후 Sentry 모니터링
+
+## Design Tone Rules (비협상 — PRFAQ 결정)
+
+모든 카피·시각화·아이콘에 적용.
+
+- ❌ 비난조 금지: "부족", "낮은", "차이남", "균형이 깨졌습니다", "더 많이 주고 있습니다"
+- ❌ 방향성 화살표 (↑↓→) 금지 — 판단처럼 읽힘. 방향은 _형태_(게이지 기울기, 막대 비율)와 *부드러운 색*으로만 전달
+- ✅ 따뜻한 정(情) 어휘: "오고 간 정", "주고받은 마음", "5년간 9번의 마음"
+- ✅ 일방성은 사실로만 전달: "이 관계는 한쪽으로 흐르고 있어요" / "주고받음이 균형 잡혀 있어요"
+- 카드 톤: 금액 강조 X, 관계의 시간에 무게
+
+## .gitignore 정책
+
+**커밋 (공유 가치 있음 — 어필 2/3/4 증거)**
+
+- `CLAUDE.md` (project level)
+- `.claude/agents/` (subagent 정의)
+- `.claude/rules/` (코드/카피 규칙)
+- `.claude/settings.json` (hooks 블록, secret 제외)
+- `.mcp.json` (project MCP 설정, secret 제외)
+- `.github/workflows/` (CI/CD)
+- `test/`, `tools/metrics/`
+
+**무시 (private/임시)**
+
+- `_bmad/`, `_bmad-output/` (bmad 산출)
+- `.claude/skills/` (bmad 자동 설치 skill 54개)
+- `.claude/settings.local.json` (개인 권한 설정, secret 포함 가능)
+- `docs/` (sprint 계획서는 `docs/sprints/`에 두어 자동 ignore)
+- `design_handoff_cashheart/` (Claude Design 참고 prototype)
+
+## Subagents (`.claude/agents/`)
+
+- `flutter-tester` — `flutter analyze` + `flutter test` 실행 및 영향 받는 테스트 식별
+- `db-migrator` — 스키마 변경 시 마이그레이션 함수 생성/검증 (in-memory sqflite 테스트 포함)
+
+## Hooks (`.claude/settings.json` — Claude Code 훅)
+
+git 훅이 아니라 Claude Code 훅으로 구현. `git commit` Bash 호출을 가로챈다. 스크립트 실체는 `tools/hooks/`에 있다.
+
+- **PreToolUse (analyze 게이트)** → `tools/hooks/pre_commit_gate.sh`: `git commit` 시 `flutter analyze` 실행, **warning/error 0건이 아니면 exit 2로 커밋 차단** (info는 차단 안 함, 추이로만 기록). flutter 부재 등 환경 문제로는 차단하지 않음.
+- **PostToolUse (지표 기록)** → `tools/hooks/post_commit_metrics.sh` → `tools/metrics/record_commit.py`: `git commit` 성공 후 LOC(+/-)·변경 파일 수·analyze 카운트·LLM 저작 여부(`Co-Authored-By: Claude` 트레일러)를 `tools/metrics/sprint-{N}.json`에 append. non-blocking(항상 exit 0).
+
+집계는 `python3 tools/metrics/summary.py`. 지표 정의는 `tools/metrics/README.md`.
+
+## Rules (`.claude/rules/`)
+
+- `copy-tone.md` — 비난조 금지·화살표 금지·정(情) 어휘 (Sprint 3·4 카피 게이트)
+- `design-tokens.md` — 색/치수/간격 하드코딩 금지, `colors.dart`·`Sizes`·`Gaps` 토큰 사용 (Sprint 2 대비)
+- `architecture.md` — MVVM+Repository 계층 경계
+
+## MCP (`.mcp.json`)
+
+**미채택** (Sprint 0 결정). Sentry/GitHub MCP는 secret 관리 부담 대비 현 시점 필요성이 낮아 도입하지 않는다. Sprint 6 CI/출시 운영 단계에서 재검토.
