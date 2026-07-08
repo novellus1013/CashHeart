@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 enum GiftDirection {
   given,
   received,
@@ -68,6 +70,13 @@ extension GiftCategoryDb on GiftCategory {
   String get dbValue => name;
 
   static GiftCategory fromDb(String value) {
-    return GiftCategory.values.byName(value);
+    for (final category in GiftCategory.values) {
+      if (category.name == value) return category;
+    }
+    // DB 손상, 또는 미래 버전에서 제거·리네임된 category 값 등
+    // 알 수 없는 값은 byName처럼 ArgumentError로 크래시시키지 않고 '기타'로 폴백한다.
+    // (Gift.fromMap이 모든 행 읽기마다 호출하므로, 한 행만 손상돼도 목록 로딩 전체가 죽는 걸 막는다.)
+    debugPrint('GiftCategoryDb.fromDb: 알 수 없는 category "$value" → etc 폴백');
+    return GiftCategory.etc;
   }
 }
