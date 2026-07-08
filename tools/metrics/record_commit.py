@@ -105,17 +105,21 @@ def main():
     if not commit_hash:
         return 0
 
+    # 저장은 12자 truncated hash로 하므로, 중복 판정도 같은 기준으로 비교해야 한다.
+    # (예전엔 full hash와 truncated hash를 비교해 dedup이 무력화됐다.)
+    short_hash = commit_hash[:12]
+
     path = METRICS_DIR / f"sprint-{sprint}.json"
     store = load_store(path, sprint)
     store.setdefault("commits", [])
 
     # 동일 커밋 중복 기록 방지 (훅 재실행 대비)
-    if any(c.get("hash") == commit_hash for c in store["commits"]):
+    if any(c.get("hash") == short_hash for c in store["commits"]):
         return 0
 
     store["commits"].append(
         {
-            "hash": commit_hash[:12],
+            "hash": short_hash,
             "timestamp": iso or datetime.now(timezone.utc).isoformat(),
             "files_changed": files,
             "loc_added": added,
