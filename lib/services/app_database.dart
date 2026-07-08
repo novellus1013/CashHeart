@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -9,7 +10,7 @@ class AppDatabase {
   static final AppDatabase instance = AppDatabase._internal();
 
   static const _dbName = 'cash_heart.db';
-  static const _dbVersion = 2;
+  static const _dbVersion = 3;
 
   Database? _database;
 
@@ -31,13 +32,15 @@ class AppDatabase {
     return await openDatabase(
       path,
       version: _dbVersion,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
+      onCreate: onCreate,
+      onUpgrade: onUpgrade,
     );
   }
 
   // DB가 처음 생성될 때 한 번만 호출되는 콜백. -> 테이블 생성
-  Future<void> _onCreate(Database db, int version) async {
+  // @visibleForTesting: in-memory sqflite 마이그레이션 테스트에서 동일 로직을 재사용하기 위해 static으로 노출.
+  @visibleForTesting
+  static Future<void> onCreate(Database db, int version) async {
     // person 테이블
     await db.execute('''
       CREATE TABLE persons (
@@ -61,17 +64,35 @@ class AppDatabase {
         date INTEGER NOT NULL,
         note TEXT NOT NULL,
         created_at INTEGER NOT NULL,
-        FOREIGN KEY (person_id) REFERENCES persons (id) 
+        FOREIGN KEY (person_id) REFERENCES persons (id)
       );
+    ''');
+
+    // person_id + date 복합 인덱스 - 관계별 균형 집계(person_id로 조회 후 date 정렬/MAX)를 커버
+    // getGiftsListByPersonId, getLastGiftByPerson, getTotalsByPerson 등에서 사용
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_gifts_person_date ON gifts(person_id, date);
     ''');
   }
 
   // DB 버전이 올라갈 때 호출되는 콜백.
   // 차후 컬럼 추가 / 테이블 추가 / 데이터 마이그레이션 등을 처리
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  // @visibleForTesting: in-memory sqflite 마이그레이션 테스트에서 동일 로직을 재사용하기 위해 static으로 노출.
+  @visibleForTesting
+  static Future<void> onUpgrade(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
     // 차후 버전이 변경되면 컬럼 추가 / 변경할 경우 사용
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE persons ADD COLUMN category TEXT;');
+    }
+    if (oldVersion < 3) {
+      // person_id + date 복합 인덱스 추가 (균형 집계 쿼리 커버, _onCreate와 동일)
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_gifts_person_date ON gifts(person_id, date);
+      ''');
     }
   }
 }
