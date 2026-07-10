@@ -1,0 +1,96 @@
+{
+  "sprint": 1,
+  "commits": [
+    {
+      "hash": "6ba1b0b7d459",
+      "timestamp": "2026-07-08T18:13:05+09:00",
+      "files_changed": 2,
+      "loc_added": 19,
+      "loc_deleted": 2,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 3
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "79bd349fa5fb",
+      "timestamp": "2026-07-08T18:15:43+09:00",
+      "files_changed": 2,
+      "loc_added": 53,
+      "loc_deleted": 1,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 3
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "8142180b725a",
+      "timestamp": "2026-07-08T18:18:39+09:00",
+      "files_changed": 4,
+      "loc_added": 333,
+      "loc_deleted": 7,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 3
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "a4bf16146d0a",
+      "timestamp": "2026-07-09T09:53:35+09:00",
+      "files_changed": 1,
+      "loc_added": 44,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 3
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "acd9167f2908",
+      "timestamp": "2026-07-09T13:04:21+09:00",
+      "files_changed": 1,
+      "loc_added": 8,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 3
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "a8b0f8b7698d",
+      "timestamp": "2026-07-10T09:46:48+09:00",
+      "files_changed": 5,
+      "loc_added": 517,
+      "loc_deleted": 9,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 3
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "6c2b40244064",
+      "timestamp": "2026-07-10T13:47:00+09:00",
+      "files_changed": 2,
+      "loc_added": 40,
+      "loc_deleted": 1,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 3
+      },
+      "llm_authored": true
+    }
+  ]
+}
