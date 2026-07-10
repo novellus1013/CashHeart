@@ -69,4 +69,19 @@ class MoneyFormatter {
       symbol: symbol,
     ).format(amount);
   }
+
+  /// 10자리 이상(≥ 10억) 금액은 "1.2억원" 형태로 축약.
+  /// 상단 카드 총액이 자릿수 때문에 2줄로 깨지거나 말줄임되는 문제(부록 A) 방지용.
+  static String formatAbbreviated(num amount) {
+    final isNegative = amount < 0;
+    final absAmount = amount.abs();
+
+    if (absAmount < 1000000000) {
+      return formatCurrency(amount, 'ko_KR', '₩ ');
+    }
+
+    final eok = absAmount / 100000000;
+    final formatted = eok.toStringAsFixed(1).replaceFirst(RegExp(r'\.0$'), '');
+    return '${isNegative ? '-' : ''}$formatted억원';
+  }
 }
