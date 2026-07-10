@@ -12,9 +12,9 @@ CashHeart는 경조사비(축의금·조의금 등)를 기록·관리하는 Flut
 # 실행 (시뮬레이터/디바이스)
 flutter run
 
-# 빌드
-flutter build apk           # Android
-flutter build ios           # iOS
+# 빌드 (prod: SENTRY_DSN 필수 — 없으면 Sentry가 조용히 비활성화됨)
+flutter build apk --dart-define=SENTRY_DSN=<값>           # Android
+flutter build ios --dart-define=SENTRY_DSN=<값>           # iOS
 
 # 정적 분석
 flutter analyze
@@ -40,6 +40,8 @@ flutter pub outdated
 - **Prod** (`AppConfig.setProd()`): 실 DB 사용, Sentry 활성화, 디버그 배너 숨김
 
 **배포 전 반드시** `main.dart`에서 `AppConfig.setProd()`가 활성화되어 있는지 확인하세요.
+
+Sentry DSN은 코드에 하드코딩하지 않고 `String.fromEnvironment('SENTRY_DSN')`로 주입합니다(`lib/main.dart`). 실제 값은 GitHub repo secret `SENTRY_DSN`에 등록되어 있으며(`gh secret set SENTRY_DSN --repo novellus1013/CashHeart`), prod 빌드 시 `--dart-define=SENTRY_DSN=<값>`으로 전달해야 합니다. 누락 시 크래시 없이 Sentry 전송만 조용히 꺼지므로 배포 전 체크리스트에 반드시 포함하세요.
 
 ## Architecture
 

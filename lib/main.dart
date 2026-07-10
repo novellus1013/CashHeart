@@ -26,11 +26,18 @@ void main() async {
   _themeProvider = await ThemeProvider.create();
 
   if (AppConfig.useSentry) {
+    const sentryDsn = String.fromEnvironment('SENTRY_DSN');
+    if (sentryDsn.isEmpty) {
+      // assert는 release에서 스트립되므로 사용하지 않음 - release에서도 남아야 하는 경고.
+      debugPrint(
+          '[CashHeart] SENTRY_DSN이 비어있습니다. flutter build 시 '
+          '--dart-define=SENTRY_DSN=<값> 옵션 없이 빌드되어 Sentry가 전송되지 않습니다.');
+    }
+
     // Production: Sentry 활성화
     await SentryFlutter.init(
       (options) {
-        options.dsn =
-            'https://8f01d649f395a7c25a20358d75df2d95@o4510417424285696.ingest.us.sentry.io/4510417425465344';
+        options.dsn = sentryDsn;
 
         options.sendDefaultPii = false;
         options.enableLogs = true;
