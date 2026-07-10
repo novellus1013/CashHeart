@@ -8,6 +8,12 @@ CashHeart v2.0의 모든 사용자 노출 텍스트·시각화·아이콘에 적
 - **방향성 화살표(↑ ↓ →)**: 우열·판단처럼 읽힌다. 방향성은 텍스트 기호가 아니라 **형태**(게이지 기울기, 막대 비율)와 **부드러운 색**으로만 전달한다.
 - **금액 강조 중심 카드**: 카드의 무게는 금액이 아니라 *관계의 시간/순간*에 둔다.
 
+## 색 매핑 (Sprint 2 Phase B 시안 검수에서 확정, 2026-07-10)
+
+- **준 마음(given)=파랑 계열, 받은 마음(received)=빨강 계열.** 코드에서는 `Theme.of(context).extension<AppColors>()!.given`/`.received`로만 참조한다(`primary`/`secondary` 직접 사용 금지 — 자세한 내용은 `.claude/rules/design-tokens.md`).
+- `design_handoff_cashheart/README.md` 원문은 반대(primary=given=빨강)로 적혀 있으나, 실제 화면에서 어색하다는 사용자 피드백으로 뒤집었다. **Sprint 3에서 9화면을 이식할 때 문서 원문이 아니라 이 규칙을 따를 것** — 문서와 코드가 다르다고 문서를 신뢰해 되돌리지 말 것.
+- 관계 균형 상태(balanced/tilted/severe)는 `given`/`received`와 별개의 색 채널이다. **방향과 무관하게 치우침의 크기만** 반영한다 — 받기만 많이 했다고 다른 색, 주기만 많이 했다고 다른 색을 쓰지 않는다(방향에 가치판단을 얹지 않는다는 이 문서의 원칙과 동일한 이유). `lib/theme/balance_state.dart`의 `BalanceState.fromTilt()` 참고.
+
 ## ✅ 권장
 
 - **따뜻한 정(情) 어휘**: "오고 간 정", "주고받은 마음", "5년간 9번의 마음".
