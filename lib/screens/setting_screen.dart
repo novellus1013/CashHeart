@@ -29,7 +29,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ),
               ),
               content: Text(
-                'noveluslab@proton.me',
+                'support@novelus.dev',
                 style: TextStyle(
                   color: Colors.grey.shade600,
                 ),
