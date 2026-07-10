@@ -73,6 +73,7 @@ Person 카테고리는 `lib/screens/home_screen.dart`의 `tabs` 리스트에 하
 - `lib/constants/sizes.dart`: 공통 spacing/font 크기 상수
 - `lib/constants/gaps.dart`: `Gaps.v8`, `Gaps.h4` 등 미리 정의된 `SizedBox` 위젯
 - `lib/theme/` (Sprint 2 Phase B~): `AppColors`(`ThemeExtension`, 라이트/다크 페어), `AppRadii`, `AppTextStyles`, `BalanceState` — 신규 위젯은 `Theme.of(context).extension<AppColors>()!`를 우선 사용. 규칙은 `.claude/rules/design-tokens.md` 참고.
+- `lib/widgets/`의 Sprint 2 Phase B 신규 컴포넌트(`HeroCard`, `BalanceVisualization`, `PillNav`, `RelationshipRow`)는 아직 실제 화면에 연결되지 않았습니다(Sprint 3에서 연결 예정). `lib/screens/dev_component_gallery_screen.dart`(`AppConfig.isDev`일 때 홈 화면 AppBar 팔레트 아이콘으로 진입)에서 미리보기 가능 — Sprint 3 작업 시작 전 참고.
 
 ## DB Schema
 
@@ -170,6 +171,7 @@ v2.0 작업의 핵심. 모든 sprint는 이 중 1개 이상에 기여해야 한�
 - ✅ 따뜻한 정(情) 어휘: "오고 간 정", "주고받은 마음", "5년간 9번의 마음"
 - ✅ 일방성은 사실로만 전달: "이 관계는 한쪽으로 흐르고 있어요" / "주고받음이 균형 잡혀 있어요"
 - 카드 톤: 금액 강조 X, 관계의 시간에 무게
+- 색 매핑(Sprint 2 확정): 준 마음(given)=파랑, 받은 마음(received)=빨강 — `AppColors.given`/`.received`로만 참조(`design_handoff_cashheart` 문서 원문과 반대이니 문서 보고 되돌리지 말 것). balanced/tilted/severe는 방향 무관, 치우침 크기만 반영. 상세는 `.claude/rules/copy-tone.md`.
 
 ## .gitignore 정책
 
