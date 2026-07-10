@@ -1,4 +1,6 @@
+import 'package:cash_heart/services/backup_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -29,6 +31,8 @@ class AppDatabase {
     // ex) `/data/user/.../databases/cash_heart.db`
     final path = join(dpPath, _dbName);
 
+    await maybeBackupBeforeUpgrade(path: path, targetVersion: _dbVersion);
+
     return await openDatabase(
       path,
       version: _dbVersion,
@@ -37,8 +41,50 @@ class AppDatabase {
     );
   }
 
+  // 실제 onUpgrade가 트리거되기 전에, 기존 DB 파일이 있고 그 버전이
+  // targetVersion보다 낮을 때만(= 곧 업그레이드가 일어날 때만) CSV 백업을 남긴다.
+  // 신규 설치(파일 없음)는 보존할 데이터가 없으므로 건너뛴다.
+  //
+  // 백업은 onCreate/onUpgrade를 트리거하지 않는 openReadOnlyDatabase로 현재
+  // 버전을 확인한 뒤, 데이터 조회를 위해 별도로 다시 열어 BackupService에 넘긴다.
+  // 백업 실패는 절대 마이그레이션 진행을 막지 않는다(BackupService가 예외를
+  // 삼키고 null을 반환) — 이 메서드 자체(버전 확인 등 사전 점검)가 실패하는
+  // 경우도 동일하게 마이그레이션을 막아선 안 되므로 전체를 try/catch로 감싼다.
+  //
+  // @visibleForTesting: 실제 디바이스 경로 없이 임시 파일 경로로 테스트에서
+  // 동일 로직을 재사용하기 위해 static으로 노출.
+  @visibleForTesting
+  static Future<void> maybeBackupBeforeUpgrade({
+    required String path,
+    required int targetVersion,
+  }) async {
+    Database? readOnlyDb;
+    try {
+      final exists = await databaseExists(path);
+      if (!exists) return; // 신규 설치: 보존할 기존 데이터 없음
+
+      readOnlyDb = await openReadOnlyDatabase(path);
+      final currentVersion = await readOnlyDb.getVersion();
+
+      if (currentVersion >= targetVersion) {
+        return; // 업그레이드가 일어나지 않음 (동일 버전이거나 다운그레이드)
+      }
+
+      await BackupService.instance.backupBeforeMigration(
+        db: readOnlyDb,
+        oldVersion: currentVersion,
+        newVersion: targetVersion,
+      );
+    } catch (e, st) {
+      debugPrint('AppDatabase.maybeBackupBeforeUpgrade error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+    } finally {
+      await readOnlyDb?.close();
+    }
+  }
+
   // DB가 처음 생성될 때 한 번만 호출되는 콜백. -> 테이블 생성
-  // @visibleForTesting: in-memory sqflite 마이그레이션 테스트에서 동일 로직을 재사용하기 위해 static으로 노출.
+  // @visibleForTesting: sqflite_common_ffi 기반 임시 파일 마이그레이션 테스트에서 동일 로직을 재사용하기 위해 static으로 노출.
   @visibleForTesting
   static Future<void> onCreate(Database db, int version) async {
     // person 테이블
@@ -77,7 +123,7 @@ class AppDatabase {
 
   // DB 버전이 올라갈 때 호출되는 콜백.
   // 차후 컬럼 추가 / 테이블 추가 / 데이터 마이그레이션 등을 처리
-  // @visibleForTesting: in-memory sqflite 마이그레이션 테스트에서 동일 로직을 재사용하기 위해 static으로 노출.
+  // @visibleForTesting: sqflite_common_ffi 기반 임시 파일 마이그레이션 테스트에서 동일 로직을 재사용하기 위해 static으로 노출.
   @visibleForTesting
   static Future<void> onUpgrade(
     Database db,
@@ -89,7 +135,7 @@ class AppDatabase {
       await db.execute('ALTER TABLE persons ADD COLUMN category TEXT;');
     }
     if (oldVersion < 3) {
-      // person_id + date 복합 인덱스 추가 (균형 집계 쿼리 커버, _onCreate와 동일)
+      // person_id + date 복합 인덱스 추가 (균형 집계 쿼리 커버, onCreate와 동일)
       await db.execute('''
         CREATE INDEX IF NOT EXISTS idx_gifts_person_date ON gifts(person_id, date);
       ''');
