@@ -15,7 +15,6 @@ class SettingScreen extends StatefulWidget {
 
 class _SettingScreenState extends State<SettingScreen> {
   final String _version = '1.1.0';
-  final String _lang = 'ko';
 
   Future<void> _showInfoDialog(BuildContext context) async {
     return await showDialog(
@@ -116,7 +115,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) =>
-                            PolicyScreen(type: 'privacy', lang: _lang),
+                            PolicyScreen(type: 'privacy'),
                       ),
                     );
                   },
@@ -129,7 +128,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) =>
-                            PolicyScreen(type: 'terms', lang: _lang),
+                            PolicyScreen(type: 'terms'),
                       ),
                     );
                   },
