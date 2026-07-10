@@ -1,3 +1,4 @@
+import 'package:cash_heart/config/app_config.dart';
 import 'package:cash_heart/constants/colors.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
@@ -10,6 +11,7 @@ import 'package:cash_heart/providers/report_view_model.dart';
 import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
 import 'package:cash_heart/screens/add_edit_person_screen.dart';
+import 'package:cash_heart/screens/dev_component_gallery_screen.dart';
 import 'package:cash_heart/screens/person_detail_screen.dart';
 import 'package:cash_heart/screens/report_screen.dart';
 import 'package:cash_heart/screens/setting_screen.dart';
@@ -69,6 +71,18 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('CashHeart'),
         backgroundColor: Colors.transparent,
         actions: [
+          if (AppConfig.isDev)
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const DevComponentGalleryScreen(),
+                  ),
+                );
+              },
+              tooltip: '컴포넌트 갤러리 (dev)',
+              icon: const Icon(Icons.palette_outlined),
+            ),
           IconButton(
             onPressed: () {
               Navigator.of(context).push(

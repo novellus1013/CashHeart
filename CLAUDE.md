@@ -54,7 +54,7 @@ Screen (View) → ViewModel (Provider) → Repository → AppDatabase (SQLite)
 - **Screens** (`lib/screens/`): UI만 담당. ViewModel을 `context.watch`/`context.read`로 구독.
 - **ViewModels** (`lib/providers/`): `ChangeNotifier` 기반 상태 관리. Repository를 주입받아 사용.
 - **Repositories** (`lib/repositories/`): SQLite CRUD. `AppDatabase.instance`를 통해 DB 접근. 모두 싱글턴.
-- **AppDatabase** (`lib/services/app_database.dart`): sqflite 싱글턴 래퍼. 현재 버전 2 (persons 테이블에 category 컬럼 추가).
+- **AppDatabase** (`lib/services/app_database.dart`): sqflite 싱글턴 래퍼. 현재 버전 3 (Sprint 1: `gifts(person_id, date)` 복합 인덱스 추가).
 
 ### Provider 주입 방식
 
@@ -72,6 +72,7 @@ Person 카테고리는 `lib/screens/home_screen.dart`의 `tabs` 리스트에 하
 - `lib/constants/colors.dart`: `primaryColor`(#FF6258), `secondaryColor`(#027DFD), 카테고리별 색상 맵
 - `lib/constants/sizes.dart`: 공통 spacing/font 크기 상수
 - `lib/constants/gaps.dart`: `Gaps.v8`, `Gaps.h4` 등 미리 정의된 `SizedBox` 위젯
+- `lib/theme/` (Sprint 2 Phase B~): `AppColors`(`ThemeExtension`, 라이트/다크 페어), `AppRadii`, `AppTextStyles`, `BalanceState` — 신규 위젯은 `Theme.of(context).extension<AppColors>()!`를 우선 사용. 규칙은 `.claude/rules/design-tokens.md` 참고.
 
 ## DB Schema
 
