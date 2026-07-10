@@ -1,15 +1,45 @@
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
-class PolicyScreen extends StatelessWidget {
+class PolicyScreen extends StatefulWidget {
   final String type;
-  final String lang;
 
-  const PolicyScreen({super.key, required this.type, required this.lang});
+  const PolicyScreen({super.key, required this.type});
 
-  Future<String> _loadPolicy(String type, String lang) async {
-    return await rootBundle.loadString('assets/$type/${type}_$lang.txt');
+  static const Map<String, String> _urls = {
+    'privacy': 'https://cashheart.novelus.dev/privacy',
+    'terms': 'https://cashheart.novelus.dev/terms',
+  };
+
+  @override
+  State<PolicyScreen> createState() => _PolicyScreenState();
+}
+
+class _PolicyScreenState extends State<PolicyScreen> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (_) => setState(() {
+            _isLoading = true;
+            _hasError = false;
+          }),
+          onPageFinished: (_) => setState(() => _isLoading = false),
+          onWebResourceError: (_) => setState(() {
+            _isLoading = false;
+            _hasError = true;
+          }),
+        ),
+      )
+      ..loadRequest(Uri.parse(PolicyScreen._urls[widget.type]!));
   }
 
   @override
@@ -17,39 +47,28 @@ class PolicyScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          type == 'privacy' ? '개인정보처리방침' : '이용약관',
+          widget.type == 'privacy' ? '개인정보처리방침' : '이용약관',
         ),
       ),
-      body: SingleChildScrollView(
-        child: Container(
-            padding: EdgeInsets.symmetric(
-              vertical: Sizes.size20,
-              horizontal: Sizes.size28,
+      body: Stack(
+        children: [
+          if (!_hasError) WebViewWidget(controller: _controller),
+          if (_isLoading && !_hasError)
+            const Center(
+              child: CircularProgressIndicator(),
             ),
-            child: FutureBuilder(
-              future: _loadPolicy(type, lang),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text('문서를 불러올 수 없습니다.'),
-                  );
-                }
-
-                return Text(
-                  snapshot.data!,
-                  style: TextStyle(
-                    fontSize: Sizes.size16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                );
-              },
-            )),
+          if (_hasError)
+            Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: Sizes.size28),
+                child: Text(
+                  '문서를 불러올 수 없습니다. 인터넷 연결을 확인해 주세요.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: Sizes.size16),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
