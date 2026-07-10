@@ -1,11 +1,10 @@
 import 'package:cash_heart/config/app_config.dart';
-import 'package:cash_heart/constants/colors.dart';
-import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/providers/theme_provider.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
 import 'package:cash_heart/screens/home_screen.dart';
 import 'package:cash_heart/services/mock_data_service.dart';
+import 'package:cash_heart/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
@@ -89,89 +88,11 @@ class MyApp extends StatelessWidget {
             home: HomeScreen(),
             debugShowCheckedModeBanner: AppConfig.isDev,
             themeMode: themeProvider.themeMode,
-            theme: _buildLightTheme(),
-            darkTheme: _buildDarkTheme(),
+            theme: AppTheme.light(),
+            darkTheme: AppTheme.dark(),
           );
         },
       ),
-    );
-  }
-
-  ThemeData _buildLightTheme() {
-    return ThemeData(
-      brightness: Brightness.light,
-      fontFamily: "pretendard",
-      scaffoldBackgroundColor: const Color(0xFFF8F6F5),
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: Brightness.light,
-      ),
-      appBarTheme: const AppBarTheme(
-        centerTitle: false,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: Color(0xFFF8F6F5),
-        elevation: 0,
-        titleTextStyle: TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: Sizes.size20,
-          color: Colors.black,
-        ),
-        iconTheme: IconThemeData(color: Colors.black),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(
-          fontSize: Sizes.size14,
-          color: Colors.grey,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-        ),
-      ),
-      cardColor: Colors.white,
-      dividerColor: Colors.grey.shade200,
-    );
-  }
-
-  ThemeData _buildDarkTheme() {
-    return ThemeData(
-      brightness: Brightness.dark,
-      fontFamily: "pretendard",
-      scaffoldBackgroundColor: const Color(0xFF1A1A1A),
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: Brightness.dark,
-      ),
-      appBarTheme: const AppBarTheme(
-        centerTitle: false,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: Color(0xFF1A1A1A),
-        elevation: 0,
-        titleTextStyle: TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: Sizes.size20,
-          color: Colors.white,
-        ),
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(
-          fontSize: Sizes.size14,
-          color: Colors.grey.shade400,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-        ),
-      ),
-      cardColor: const Color(0xFF2A2A2A),
-      dividerColor: Colors.grey.shade800,
     );
   }
 }
