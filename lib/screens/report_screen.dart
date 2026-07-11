@@ -36,7 +36,7 @@ class _ReportScreenState extends State<ReportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          '리포트',
+          '통계',
           style: TextStyle(fontSize: Sizes.size18, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -57,19 +57,12 @@ class _ReportScreenState extends State<ReportScreen> {
                     categoryData: vm.categoryData,
                     topCategory: vm.topCategory,
                   ),
-                  _GiveTakeSection(
-                    topGivers: vm.topGivers,
-                    topReceivers: vm.topReceivers,
-                  ),
-                  _LeaningSection(
-                    givenLeaning: vm.givenLeaning,
-                    receivedLeaning: vm.receivedLeaning,
-                  ),
+                  _TopInteractionsSection(rows: vm.topInteractions),
                   _InsightSection(
                     icon: Icons.favorite_border,
                     iconColor:
                         Theme.of(context).extension<AppColors>()!.secondary,
-                    title: '가장 많이 나눈 사람',
+                    title: '가장 자주 만난 사람',
                     rows: vm.mostFrequent,
                     noteOf: (stats) => frequencyNote(stats.count),
                   ),
@@ -438,19 +431,19 @@ class _CategoryLegendItem extends StatelessWidget {
   }
 }
 
-/// "기브 앤 테이크" 랭킹 — 준/받은 마음 절대 금액 top3를 나란히 보여준다
-/// (2026-07-11 추가, AI 추천 리포트 항목 반영).
-class _GiveTakeSection extends StatelessWidget {
-  final List<PersonRelationshipStats> topGivers;
-  final List<PersonRelationshipStats> topReceivers;
+/// 오간 마음(준+받은 금액) 총액이 큰 순 top3. 준/받은 금액을 한 행에 함께
+/// 보여줘서 균형 막대가 왜 그렇게 기울어 있는지 바로 확인할 수 있다.
+/// 원래 "가장 많이 준/받은 사람" + "마음이 향한 방향" 3개 섹션으로 나뉘어
+/// 있었으나, 같은 사람이 서로 다른 랭킹에서 다르게(때론 모순처럼) 보여
+/// 혼란스럽다는 피드백(2026-07-11)으로 하나의 목록으로 통합했다.
+class _TopInteractionsSection extends StatelessWidget {
+  final List<PersonRelationshipStats> rows;
 
-  const _GiveTakeSection({required this.topGivers, required this.topReceivers});
+  const _TopInteractionsSection({required this.rows});
 
   @override
   Widget build(BuildContext context) {
-    if (topGivers.isEmpty && topReceivers.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (rows.isEmpty) return const SizedBox.shrink();
     final colors = Theme.of(context).extension<AppColors>()!;
 
     return Padding(
@@ -467,7 +460,7 @@ class _GiveTakeSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '많이 나눈 마음 순위',
+              '많이 오간 마음',
               style: TextStyle(
                 fontSize: Sizes.size18,
                 fontWeight: FontWeight.bold,
@@ -475,32 +468,10 @@ class _GiveTakeSection extends StatelessWidget {
               ),
             ),
             Gaps.v16,
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: _RankColumn(
-                      label: '가장 많이 전한 사람',
-                      color: colors.given,
-                      rows: topGivers,
-                      amountOf: (s) => s.given,
-                    ),
-                  ),
-                  Gaps.h16,
-                  Container(width: 1, color: colors.borderSoft),
-                  Gaps.h16,
-                  Expanded(
-                    child: _RankColumn(
-                      label: '가장 많이 받은 사람',
-                      color: colors.received,
-                      rows: topReceivers,
-                      amountOf: (s) => s.received,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            for (final row in rows) ...[
+              _InteractionRow(entry: row),
+              Gaps.v10,
+            ],
           ],
         ),
       ),
@@ -508,159 +479,74 @@ class _GiveTakeSection extends StatelessWidget {
   }
 }
 
-class _RankColumn extends StatelessWidget {
-  final String label;
-  final Color color;
-  final List<PersonRelationshipStats> rows;
-  final int Function(RelationshipStats stats) amountOf;
+class _InteractionRow extends StatelessWidget {
+  final PersonRelationshipStats entry;
 
-  const _RankColumn({
-    required this.label,
-    required this.color,
-    required this.rows,
-    required this.amountOf,
-  });
+  const _InteractionRow({required this.entry});
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
+    final stats = entry.stats;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w600, color: colors.text3),
-        ),
-        Gaps.v10,
-        if (rows.isEmpty)
-          Text('아직 기록이 없어요',
-              style: TextStyle(fontSize: 12, color: colors.text3))
-        else
-          for (var i = 0; i < rows.length; i++) ...[
-            Row(
+    return Container(
+      padding: const EdgeInsets.all(Sizes.size14),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(Sizes.size12),
+        border: Border.all(color: colors.borderSoft),
+      ),
+      child: Row(
+        children: [
+          Avatar(
+              name: entry.person.name,
+              tintSeed: entry.person.id ?? 0,
+              size: 36),
+          Gaps.h12,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: Sizes.size16,
-                  child: Text(
-                    '${i + 1}',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: colors.text3),
+                Text(
+                  entry.person.name,
+                  style: TextStyle(
+                    fontSize: Sizes.size14,
+                    fontWeight: FontWeight.bold,
+                    color: colors.text,
                   ),
                 ),
-                Avatar(
-                    name: rows[i].person.name,
-                    tintSeed: rows[i].person.id ?? 0,
-                    size: 24),
-                Gaps.h8,
-                Expanded(
-                  child: Text(
-                    rows[i].person.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: colors.text),
-                  ),
+                Gaps.v4,
+                SizedBox(
+                  width: 80,
+                  child: BalanceVisualization(tilt: stats.tilt, compact: true),
                 ),
               ],
             ),
-            Gaps.v4,
-            Text(
-              MoneyFormatter.formatWonShort(amountOf(rows[i].stats)),
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.bold, color: color),
-            ),
-            if (i != rows.length - 1) Gaps.v10,
-          ],
-      ],
-    );
-  }
-}
-
-/// 마음이 어느 방향으로 더 흘렀는지 — tilt 기준 상위 관계(2026-07-11 추가).
-/// copy-tone.md 준수: "적자/흑자" 같은 판단적 표현 대신 방향 사실만 전달.
-class _LeaningSection extends StatelessWidget {
-  final List<PersonRelationshipStats> givenLeaning;
-  final List<PersonRelationshipStats> receivedLeaning;
-
-  const _LeaningSection({
-    required this.givenLeaning,
-    required this.receivedLeaning,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (givenLeaning.isEmpty && receivedLeaning.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    final colors = Theme.of(context).extension<AppColors>()!;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          Sizes.size20, Sizes.size16, Sizes.size20, 0),
-      child: Container(
-        padding: const EdgeInsets.all(Sizes.size20),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(Sizes.size16),
-          border: Border.all(color: colors.borderSoft),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '마음이 향한 방향',
-              style: TextStyle(
-                fontSize: Sizes.size18,
-                fontWeight: FontWeight.bold,
-                color: colors.text,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '받은 ${MoneyFormatter.formatWonShort(stats.received)}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: colors.received,
+                ),
               ),
-            ),
-            Gaps.v4,
-            Text('흐름의 방향만 보여드려요.',
-                style: TextStyle(fontSize: 12, color: colors.text3)),
-            Gaps.v16,
-            if (givenLeaning.isNotEmpty) ...[
-              _LeaningGroup(label: '내가 더 많이 전한 관계', rows: givenLeaning),
-              if (receivedLeaning.isNotEmpty) Gaps.v16,
+              Gaps.v2,
+              Text(
+                '준 ${MoneyFormatter.formatWonShort(stats.given)}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: colors.given,
+                ),
+              ),
             ],
-            if (receivedLeaning.isNotEmpty)
-              _LeaningGroup(label: '내가 더 많이 받은 관계', rows: receivedLeaning),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LeaningGroup extends StatelessWidget {
-  final String label;
-  final List<PersonRelationshipStats> rows;
-
-  const _LeaningGroup({required this.label, required this.rows});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-              fontSize: 12, fontWeight: FontWeight.w600, color: colors.text3),
-        ),
-        Gaps.v8,
-        for (final row in rows) ...[
-          _InsightRow(entry: row, note: tiltDirectionNote(row.stats.tilt)),
-          Gaps.v8,
+          ),
         ],
-      ],
+      ),
     );
   }
 }

@@ -23,8 +23,7 @@ class DevComponentGalleryScreen extends StatefulWidget {
       _DevComponentGalleryScreenState();
 }
 
-class _DevComponentGalleryScreenState
-    extends State<DevComponentGalleryScreen> {
+class _DevComponentGalleryScreenState extends State<DevComponentGalleryScreen> {
   int _navIndex = 0;
 
   @override
@@ -36,7 +35,8 @@ class _DevComponentGalleryScreenState
       body: Stack(
         children: [
           ListView(
-            padding: EdgeInsets.all(Sizes.size20).copyWith(bottom: Sizes.size96),
+            padding:
+                EdgeInsets.all(Sizes.size20).copyWith(bottom: Sizes.size96),
             children: [
               _SectionTitle('HeroCard'),
               Gaps.v12,
@@ -140,13 +140,15 @@ class _DevComponentGalleryScreenState
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const MigrationScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const MigrationScreen()),
                     ),
                     child: const Text('Migration'),
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const OnboardingScreen()),
                     ),
                     child: const Text('Onboarding'),
                   ),
@@ -195,15 +197,14 @@ class _DevComponentGalleryScreenState
                   child: Text(
                     '선택된 탭: ${const ["홈", "리포트", "설정"][_navIndex]} '
                     '(실제 화면 전환은 Sprint 3에서 연결)',
-                    style:
-                        AppTextStyles.caption.copyWith(color: colors.text3),
+                    style: AppTextStyles.caption.copyWith(color: colors.text3),
                   ),
                 ),
                 Gaps.v8,
                 PillNav(
                   items: const [
                     PillNavItem(icon: Icons.home_outlined, label: '홈'),
-                    PillNavItem(icon: Icons.bar_chart_outlined, label: '리포트'),
+                    PillNavItem(icon: Icons.bar_chart_outlined, label: '통계'),
                     PillNavItem(icon: Icons.settings_outlined, label: '설정'),
                   ],
                   selectedIndex: _navIndex,

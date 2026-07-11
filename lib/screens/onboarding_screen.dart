@@ -4,7 +4,6 @@ import 'package:cash_heart/models/gift.dart';
 import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/screens/main_shell_screen.dart';
 import 'package:cash_heart/theme/app_colors.dart';
-import 'package:cash_heart/utils/root_messenger.dart';
 import 'package:cash_heart/widgets/avatar.dart';
 import 'package:cash_heart/widgets/balance_visualization.dart';
 import 'package:cash_heart/widgets/stream_chart.dart';
@@ -67,9 +66,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     if (!mounted) return;
 
-    rootScaffoldMessengerKey.currentState?.showSnackBar(
-      const SnackBar(content: Text('온보딩은 설정에서 언제든 다시 볼 수 있어요.')),
-    );
+    // 매번 하단 SnackBar로 뜨는 게 번거롭다는 피드백(2026-07-11)으로
+    // 건너뛰기/시작하기를 누른 시점에 짧게 자동으로 사라지는 팝업으로 교체.
+    await _showDismissHint();
+    if (!mounted) return;
 
     // Settings에서 "다시 보기"로 들어온 경우엔 뒤로가기 스택이 있으므로 pop,
     // 최초 실행(뒤로갈 곳 없음)인 경우엔 MainShellScreen으로 교체한다.
@@ -80,6 +80,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         MaterialPageRoute(builder: (_) => const MainShellScreen()),
       );
     }
+  }
+
+  Future<void> _showDismissHint() async {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        Future.delayed(const Duration(milliseconds: 1400), () {
+          if (Navigator.of(dialogContext).canPop()) {
+            Navigator.of(dialogContext).pop();
+          }
+        });
+
+        return Dialog(
+          backgroundColor: colors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Sizes.size16),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: Sizes.size24,
+              vertical: Sizes.size18,
+            ),
+            child: Text(
+              '온보딩은 설정에서 언제든 다시 볼 수 있어요.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: Sizes.size14, color: colors.text),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _next() {

@@ -82,21 +82,12 @@ class ReportViewModel extends ChangeNotifier {
   List<PersonRelationshipStats> _mostFrequent = [];
   List<PersonRelationshipStats> get mostFrequent => _mostFrequent;
 
-  /// 준 마음 금액 top3(2026-07-11 추가 — 기브 앤 테이크 랭킹).
-  List<PersonRelationshipStats> _topGivers = [];
-  List<PersonRelationshipStats> get topGivers => _topGivers;
-
-  /// 받은 마음 금액 top3.
-  List<PersonRelationshipStats> _topReceivers = [];
-  List<PersonRelationshipStats> get topReceivers => _topReceivers;
-
-  /// 마음이 준 쪽으로 더 많이 기운 관계 top3(방향 == given, |tilt| 큰 순).
-  List<PersonRelationshipStats> _givenLeaning = [];
-  List<PersonRelationshipStats> get givenLeaning => _givenLeaning;
-
-  /// 마음이 받은 쪽으로 더 많이 기운 관계 top3.
-  List<PersonRelationshipStats> _receivedLeaning = [];
-  List<PersonRelationshipStats> get receivedLeaning => _receivedLeaning;
+  /// 오간 마음 총액(given+received) 큰 순 top3 — 준/받은 금액을 한 줄에 함께
+  /// 보여준다. 원래는 "가장 많이 준 사람"/"가장 많이 받은 사람"/"마음이 향한
+  /// 방향" 3개 섹션으로 나뉘어 있었으나, 같은 사람이 서로 다른 랭킹에 다르게
+  /// 나타나 혼란스럽다는 피드백(2026-07-11)으로 하나의 목록으로 통합했다.
+  List<PersonRelationshipStats> _topInteractions = [];
+  List<PersonRelationshipStats> get topInteractions => _topInteractions;
 
   /// 월(1~12월, index 0=1월) 기준 전체 기간 누적 총액 — 계절성 파악용.
   List<int> _monthlyHistoryTotals = List.filled(12, 0);
@@ -227,25 +218,9 @@ class ReportViewModel extends ChangeNotifier {
       ..sort((a, b) => b.stats.count.compareTo(a.stats.count));
     _mostFrequent = frequent.take(3).toList();
 
-    final givers = withRecords.where((x) => x.stats.given > 0).toList()
-      ..sort((a, b) => b.stats.given.compareTo(a.stats.given));
-    _topGivers = givers.take(3).toList();
-
-    final receivers = withRecords.where((x) => x.stats.received > 0).toList()
-      ..sort((a, b) => b.stats.received.compareTo(a.stats.received));
-    _topReceivers = receivers.take(3).toList();
-
-    final givenLeaning = withRecords
-        .where((x) => x.stats.direction == RelationshipDirection.given)
-        .toList()
-      ..sort((a, b) => a.stats.tilt.compareTo(b.stats.tilt));
-    _givenLeaning = givenLeaning.take(3).toList();
-
-    final receivedLeaning = withRecords
-        .where((x) => x.stats.direction == RelationshipDirection.received)
-        .toList()
-      ..sort((a, b) => b.stats.tilt.compareTo(a.stats.tilt));
-    _receivedLeaning = receivedLeaning.take(3).toList();
+    final interactions = [...withRecords]
+      ..sort((a, b) => b.stats.total.compareTo(a.stats.total));
+    _topInteractions = interactions.take(3).toList();
   }
 
   /// 월(1~12) 기준 전체 기간 누적 총액 — "N월/M월에 마음을 나누는 일이 많아요" 같은

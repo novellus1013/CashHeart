@@ -32,7 +32,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   static const _items = [
     PillNavItem(icon: Icons.home_outlined, label: '홈'),
-    PillNavItem(icon: Icons.bar_chart_outlined, label: '리포트'),
+    PillNavItem(icon: Icons.bar_chart_outlined, label: '통계'),
     PillNavItem(icon: Icons.settings_outlined, label: '설정'),
   ];
 
