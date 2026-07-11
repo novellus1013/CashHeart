@@ -23,4 +23,23 @@ void main() {
       expect(result, '-12.3억원');
     });
   });
+
+  group('MoneyFormatter.formatWonShort', () {
+    test('1만 미만은 콤마 포맷 그대로', () {
+      expect(MoneyFormatter.formatWonShort(9000), '9,000');
+    });
+
+    test('1만 이상 1억 미만은 만 단위로 반올림', () {
+      expect(MoneyFormatter.formatWonShort(5300000), '530만');
+    });
+
+    test('1억 이상은 억 단위(소수점 1자리, 정수면 생략)', () {
+      expect(MoneyFormatter.formatWonShort(120000000), '1.2억');
+      expect(MoneyFormatter.formatWonShort(200000000), '2억');
+    });
+
+    test('음수는 부호를 유지한다', () {
+      expect(MoneyFormatter.formatWonShort(-5300000), '-530만');
+    });
+  });
 }

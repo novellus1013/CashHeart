@@ -1,0 +1,57 @@
+{
+  "sprint": 3,
+  "commits": [
+    {
+      "hash": "b470ba87e531",
+      "timestamp": "2026-07-11T16:32:46+09:00",
+      "files_changed": 72,
+      "loc_added": 6361,
+      "loc_deleted": 2200,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 5
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "0212f1e07231",
+      "timestamp": "2026-07-11T16:33:03+09:00",
+      "files_changed": 1,
+      "loc_added": 18,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 5
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "b272ff7e2541",
+      "timestamp": "2026-07-11T16:33:14+09:00",
+      "files_changed": 1,
+      "loc_added": 13,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 5
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "418c28812538",
+      "timestamp": "2026-07-11T16:59:13+09:00",
+      "files_changed": 5,
+      "loc_added": 127,
+      "loc_deleted": 231,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    }
+  ]
+}

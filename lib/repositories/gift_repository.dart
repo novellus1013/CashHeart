@@ -1,15 +1,22 @@
 import 'package:cash_heart/models/gift.dart';
-import 'package:cash_heart/models/gift_totals.dart';
+import 'package:cash_heart/models/relationship_stats.dart';
 import 'package:cash_heart/services/app_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:sqflite/sqflite.dart';
 
 class GiftRepository {
-  GiftRepository._internal();
+  GiftRepository._internal() : _testDatabase = null;
   static final GiftRepository instance = GiftRepository._internal();
 
-  Future<Database> get _db async => AppDatabase.instance.database;
+  /// 테스트 전용 — 실 기기 경로(`AppDatabase.instance`) 대신 주입된 [Database]를 쓴다.
+  /// 프로덕션 코드는 항상 싱글턴 `GiftRepository.instance`를 사용해야 한다.
+  @visibleForTesting
+  GiftRepository.forTesting(Database database) : _testDatabase = database;
+
+  final Database? _testDatabase;
+
+  Future<Database> get _db async => _testDatabase ?? AppDatabase.instance.database;
 
   Future<int> insertGift(Gift gift) async {
     try {
@@ -104,41 +111,70 @@ class GiftRepository {
     }
   }
 
-  //getTotalsByPerosn을 총액이 아닌 준 돈, 받은 돈 나눠서 얻어올 수 있도록 로직 변경.
-  Future<Map<int, GiftTotals>> getTotalsByPerson() async {
+  /// person별 [RelationshipStats]를 한 번의 GROUP BY로 집계한다.
+  /// 과거 `getTotalsByPerson`+`getLastGiftByPerson`을 대체 — Sprint 1의
+  /// `idx_gifts_person_date` 인덱스가 이 집계를 커버해 스키마 변경은 필요 없다.
+  Future<Map<int, RelationshipStats>> getStatsByPerson() async {
     try {
       final db = await _db;
 
       final result = await db.rawQuery('''
-      SELECT 
-        person_id, 
-        SUM(CASE WHEN direction = 1 THEN amount ELSE 0 END) AS total_received,
-        SUM(CASE WHEN direction = -1 THEN amount ELSE 0 END) AS total_given
+      SELECT
+        person_id,
+        SUM(CASE WHEN direction = 1 THEN amount ELSE 0 END) AS received,
+        SUM(CASE WHEN direction = -1 THEN amount ELSE 0 END) AS given,
+        COUNT(*) AS count,
+        MIN(date) AS first_date,
+        MAX(date) AS last_date
       FROM gifts
       GROUP BY person_id
     ''');
 
-      final Map<int, GiftTotals> totals = {};
+      final Map<int, RelationshipStats> stats = {};
+      for (final row in result) {
+        final personId = row['person_id'] as int;
+        final firstDateMs = row['first_date'] as int?;
+        final lastDateMs = row['last_date'] as int?;
 
-      for (final raw in result) {
-        final personId = raw['person_id'] as int;
-        final totalsReceived = raw['total_received'];
-        final totalsGiven = raw['total_given'];
-
-        final totalRecived =
-            totalsReceived == null ? 0 : (totalsReceived as num).toInt();
-        final totalGiven =
-            totalsGiven == null ? 0 : (totalsGiven as num).toInt();
-        totals[personId] = GiftTotals(
-          personId: personId,
-          totalGivenAmount: totalGiven,
-          totalReceivedAmount: totalRecived,
+        stats[personId] = RelationshipStats(
+          received: (row['received'] as num?)?.toInt() ?? 0,
+          given: (row['given'] as num?)?.toInt() ?? 0,
+          count: (row['count'] as num?)?.toInt() ?? 0,
+          firstDate: firstDateMs == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(firstDateMs),
+          lastDate: lastDateMs == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(lastDateMs),
         );
       }
 
-      return totals;
+      return stats;
     } catch (e, st) {
-      debugPrint('getTotalsByPerson error: $e');
+      debugPrint('getStatsByPerson error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  /// Home hero 카드의 기간 필터(최근 1/3/6개월·1년·전체)용 준/받은 마음 합계.
+  /// [sinceMs]가 null이면 전체 기간(필터 없음).
+  Future<({int given, int received})> getTotalsSince(int? sinceMs) async {
+    try {
+      final db = await _db;
+      final result = await db.rawQuery('''
+        SELECT
+          SUM(CASE WHEN direction = -1 THEN amount ELSE 0 END) AS given,
+          SUM(CASE WHEN direction = 1 THEN amount ELSE 0 END) AS received
+        FROM gifts
+        ${sinceMs == null ? '' : 'WHERE date >= ?'}
+      ''', sinceMs == null ? null : [sinceMs]);
+
+      final given = (result.first['given'] as num?)?.toInt() ?? 0;
+      final received = (result.first['received'] as num?)?.toInt() ?? 0;
+      return (given: given, received: received);
+    } catch (e, st) {
+      debugPrint('getTotalsSince error: $e');
       await Sentry.captureException(e, stackTrace: st);
       rethrow;
     }
@@ -192,33 +228,6 @@ class GiftRepository {
       return rawTotal == null ? 0 : (rawTotal as num).toInt();
     } catch (e, st) {
       debugPrint('getTotalReceived error: $e');
-      await Sentry.captureException(e, stackTrace: st);
-      rethrow;
-    }
-  }
-
-  Future<Map<int, Gift>> getLastGiftByPerson() async {
-    try {
-      final db = await _db;
-      final result = await db.rawQuery('''
-        SELECT g.*
-        FROM gifts g
-        INNER JOIN (
-          SELECT person_id, MAX(date) AS max_date
-          FROM gifts
-          GROUP BY person_id
-        ) latest ON g.person_id = latest.person_id AND g.date = latest.max_date
-      ''');
-
-      final Map<int, Gift> lastGifts = {};
-      for (final row in result) {
-        final gift = Gift.fromMap(row);
-        lastGifts[gift.personId] = gift;
-      }
-
-      return lastGifts;
-    } catch (e, st) {
-      debugPrint('getLastGiftByPerson error: $e');
       await Sentry.captureException(e, stackTrace: st);
       rethrow;
     }

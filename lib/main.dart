@@ -2,11 +2,13 @@ import 'package:cash_heart/config/app_config.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/providers/theme_provider.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
-import 'package:cash_heart/screens/home_screen.dart';
+import 'package:cash_heart/screens/main_shell_screen.dart';
 import 'package:cash_heart/services/mock_data_service.dart';
 import 'package:cash_heart/theme/app_theme.dart';
+import 'package:cash_heart/utils/root_messenger.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -33,6 +35,11 @@ void main() async {
           '--dart-define=SENTRY_DSN=<값> 옵션 없이 빌드되어 Sentry가 전송되지 않습니다.');
     }
 
+    // release 문자열을 pubspec.yaml 버전에 하드코딩 고정해뒀던 게 매 버전 올릴
+    // 때마다 갱신을 잊기 쉬워 실제로도 밀려 있었다(2026-07-11 발견) — 설치된
+    // 버전을 직접 읽어 항상 최신 상태로 맞춘다.
+    final packageInfo = await PackageInfo.fromPlatform();
+
     // Production: Sentry 활성화
     await SentryFlutter.init(
       (options) {
@@ -45,7 +52,8 @@ void main() async {
         options.replay.sessionSampleRate = 0.0;
         options.replay.onErrorSampleRate = 0.0;
         options.environment = 'production';
-        options.release = 'CashHeart@1.0.0+1';
+        options.release =
+            'CashHeart@${packageInfo.version}+${packageInfo.buildNumber}';
       },
       appRunner: () => runApp(SentryWidget(child: const MyApp())),
     );
@@ -85,7 +93,8 @@ class MyApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
-            home: HomeScreen(),
+            scaffoldMessengerKey: rootScaffoldMessengerKey,
+            home: const MainShellScreen(),
             debugShowCheckedModeBanner: AppConfig.isDev,
             themeMode: themeProvider.themeMode,
             theme: AppTheme.light(),

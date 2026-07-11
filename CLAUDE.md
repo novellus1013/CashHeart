@@ -96,7 +96,7 @@ Repository의 모든 DB 작업은 `try/catch`로 감싸며 `Sentry.captureExcept
 
 현재 **v2.0.0 큰 기능 확장** 진행 중. PRFAQ + UI 사양 완료. Sprint 0–6으로 분해.
 
-**Sprint 상태** (최신은 `docs/sprints/ROADMAP.md` 참고): Sprint 0 완료(dev 머지) → Sprint 1 완료(DB v3 마이그레이션, dev 미머지) → **Sprint 2 Phase A 진행 대상**(설정화면 정비 + 인프라 하드닝 — 이메일 교체, INTERNET 권한 픽스, Sentry DSN 리팩터, 개인정보/약관 웹뷰 전환; 설계 완료 2026-07-10) → Sprint 2 Phase B(UI 리뉴얼 인프라 — 디자인 토큰 `lib/theme/` + 핵심 컴포넌트).
+**Sprint 상태** (최신은 `docs/sprints/ROADMAP.md` 참고): Sprint 0 완료(dev 머지) → Sprint 1 완료(DB v3 마이그레이션, dev 미머지) → Sprint 2 Phase A+B 완료(설정화면 정비/인프라 하드닝 + 디자인 토큰·핵심 컴포넌트, dev 미머지) → **Sprint 3 구현 완료**(9화면 중 6개 실제 통합, `feat/sprint-3-ui-integration`) — **카피 톤 사용자 게이트만 대기 중**, 통과 전까지 dev 머지 보류.
 
 > ⚠️ 다크모드는 이미 v1.1부터 구현되어 있다(`lib/providers/theme_provider.dart`). Sprint 2는 다크모드 "도입"이 아니라 디자인 토큰 체계 구축이다.
 
@@ -155,9 +155,9 @@ v2.0 작업의 핵심. 모든 sprint는 이 중 1개 이상에 기여해야 한�
 
 - Sprint 0: CLAUDE.md 컨벤션 검토 + hook 시연 동의 ✅
 - Sprint 1: 실 기기 v1.1 → v2.0 데이터 보존 검증 ✅
-- Sprint 2 Phase A (← 지금 단계): 없음 — 5개 항목 모두 사용자 결정 완료(2026-07-10), 구현만 남음
-- Sprint 2 Phase B: 디자인 토큰(`lib/theme/`)·핵심 컴포넌트 시안 톤 검수 (다크모드는 이미 구현됨, 이 sprint는 토큰화 작업)
-- Sprint 3: 비난조 카피 검수, 균형 시각화 톤 확정
+- Sprint 2 Phase A: 없음 — 5개 항목 모두 사용자 결정 완료(2026-07-10) ✅
+- Sprint 2 Phase B: 디자인 토큰(`lib/theme/`)·핵심 컴포넌트 시안 톤 검수 ✅ (다크모드는 이미 구현됨, 이 sprint는 토큰화 작업)
+- Sprint 3 (← 지금 단계, 구현 완료·게이트 대기): 비난조 카피 검수, 균형 시각화 톤 확정
 - Sprint 4: 9 카드 변형 시안 검수 + AI 메시지 A/B 결과 검토
 - Sprint 5: iOS App Store Guideline 2.4.5 본인 검토 + 강제/권장 업데이트 정책 결정
 - Sprint 6: ASO 자산 직접 작성, 출시 후 Sentry 모니터링

@@ -57,6 +57,21 @@ void main() {
     expect(markerColor(tester), AppColors.light.severe);
   });
 
+  testWidgets('compact 모드는 트랙에 given/received 색을 쓰지 않는다(마커만 색상)',
+      (tester) async {
+    await tester.pumpWidget(
+        wrap(const BalanceVisualization(tilt: 0.6, compact: true)));
+
+    final colors = tester
+        .widgetList<Container>(find.byType(Container))
+        .map((c) => c.color)
+        .whereType<Color>();
+
+    expect(colors, isNot(contains(AppColors.light.given)));
+    expect(colors, isNot(contains(AppColors.light.received)));
+    expect(colors, contains(AppColors.light.borderSoft));
+  });
+
   testWidgets('화살표 아이콘을 사용하지 않는다', (tester) async {
     await tester.pumpWidget(wrap(const BalanceVisualization(tilt: 0.5)));
 

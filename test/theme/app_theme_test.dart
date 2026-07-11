@@ -19,6 +19,14 @@ void main() {
       expect(theme.scaffoldBackgroundColor, AppColors.light.bg);
       expect(theme.cardColor, AppColors.light.surface);
     });
+
+    test('balance soft 배경/cardGrad 토큰이 프로토타입 값과 일치한다', () {
+      final colors = theme.extension<AppColors>()!;
+      expect(colors.balancedSoft, const Color(0xFFE8F5E9));
+      expect(colors.tiltedSoft, const Color(0xFFFFF3E0));
+      expect(colors.severeSoft, const Color(0xFFFFEDEB));
+      expect(colors.cardGrad, isA<LinearGradient>());
+    });
   });
 
   group('AppTheme.dark', () {
@@ -35,6 +43,13 @@ void main() {
     test('scaffoldBackgroundColor/cardColor가 토큰과 일치한다', () {
       expect(theme.scaffoldBackgroundColor, AppColors.dark.bg);
       expect(theme.cardColor, AppColors.dark.surface);
+    });
+
+    test('다크 primarySoft/secondarySoft는 반투명(라이트값 복붙이 아니다)', () {
+      final colors = theme.extension<AppColors>()!;
+      expect(colors.primarySoft.a, closeTo(0x29 / 255, 0.01));
+      expect(colors.primarySoft, isNot(AppColors.light.primarySoft));
+      expect(colors.secondarySoft, isNot(AppColors.light.secondarySoft));
     });
   });
 

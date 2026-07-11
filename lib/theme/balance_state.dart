@@ -28,4 +28,16 @@ extension BalanceStateColor on BalanceState {
         return colors.severe;
     }
   }
+
+  /// 상태 pill 배경 등 옅은 배경용 색.
+  Color softColor(AppColors colors) {
+    switch (this) {
+      case BalanceState.balanced:
+        return colors.balancedSoft;
+      case BalanceState.tilted:
+        return colors.tiltedSoft;
+      case BalanceState.severe:
+        return colors.severeSoft;
+    }
+  }
 }

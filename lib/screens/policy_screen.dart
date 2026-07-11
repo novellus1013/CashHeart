@@ -10,6 +10,14 @@ class PolicyScreen extends StatefulWidget {
   static const Map<String, String> _urls = {
     'privacy': 'https://cashheart.novelus.dev/privacy',
     'terms': 'https://cashheart.novelus.dev/terms',
+    // 업데이트 내역 상세 페이지 — 자체 페이지 완성 전까지 임시 placeholder.
+    'update': 'https://www.google.com',
+  };
+
+  static const Map<String, String> _titles = {
+    'privacy': '개인정보처리방침',
+    'terms': '이용약관',
+    'update': '업데이트 안내',
   };
 
   @override
@@ -46,9 +54,7 @@ class _PolicyScreenState extends State<PolicyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.type == 'privacy' ? '개인정보처리방침' : '이용약관',
-        ),
+        title: Text(PolicyScreen._titles[widget.type] ?? ''),
       ),
       body: Stack(
         children: [

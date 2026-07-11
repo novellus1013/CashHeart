@@ -52,4 +52,49 @@ void main() {
     expect(givenText.style!.color, AppColors.light.given);
     expect(receivedText.style!.color, AppColors.light.received);
   });
+
+  group('Detail 변형(statePill/quoteMessage/extra)', () {
+    for (final entry in {
+      'balanced': 0.1,
+      'tilted': 0.35,
+      'severe': 0.8,
+    }.entries) {
+      testWidgets('${entry.key} 상태에서도 statePill/quoteMessage/extra가 함께 렌더된다',
+          (tester) async {
+        final tilt = entry.value;
+        final received = ((1 + tilt) * 500000).round();
+        final given = 1000000 - received;
+
+        await tester.pumpWidget(wrap(HeroCard(
+          label: '오고 간 정(情) · 순잔액',
+          netAmount: received - given,
+          givenAmount: given,
+          receivedAmount: received,
+          statePill: const Text('상태 pill'),
+          quoteMessage: '관찰자 톤 메시지',
+          extra: const Text('추가 콘텐츠'),
+        )));
+
+        expect(find.text('상태 pill'), findsOneWidget);
+        expect(find.text('관찰자 톤 메시지'), findsOneWidget);
+        expect(find.text('추가 콘텐츠'), findsOneWidget);
+      });
+    }
+
+    testWidgets('amountStyle을 넘기면 기본 heroAmount 대신 그 스타일을 쓴다', (tester) async {
+      const customStyle = TextStyle(fontSize: 30, fontWeight: FontWeight.w600);
+
+      await tester.pumpWidget(wrap(const HeroCard(
+        label: '오고 간 정(情) · 순잔액',
+        netAmount: 320000,
+        givenAmount: 540000,
+        receivedAmount: 860000,
+        amountStyle: customStyle,
+      )));
+
+      final amountText = tester.widget<Text>(find.textContaining('320,000'));
+      expect(amountText.style!.fontSize, 30);
+      expect(amountText.style!.fontWeight, FontWeight.w600);
+    });
+  });
 }

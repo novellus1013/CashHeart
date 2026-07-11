@@ -16,6 +16,19 @@ class HeroCard extends StatelessWidget {
   final int receivedAmount;
   final Widget? trailing;
 
+  /// Detail 변형: 균형 상태 pill(우측 상단, `toneLabel` 카피는 호출자가 넘김).
+  final Widget? statePill;
+
+  /// Detail 변형: 관찰자 톤 메시지 인용구(`toneMessage` 카피는 호출자가 넘김).
+  final String? quoteMessage;
+
+  /// Detail 변형: hero 카드 안에 이어 붙일 콘텐츠(StreamChart 등).
+  final Widget? extra;
+
+  /// 순잔액 텍스트 스타일. 기본값은 Home용 [AppTextStyles.heroAmount](38px).
+  /// Person Detail은 [AppTextStyles.detailAmount](30px)를 넘긴다.
+  final TextStyle amountStyle;
+
   const HeroCard({
     super.key,
     required this.label,
@@ -23,6 +36,10 @@ class HeroCard extends StatelessWidget {
     required this.givenAmount,
     required this.receivedAmount,
     this.trailing,
+    this.statePill,
+    this.quoteMessage,
+    this.extra,
+    this.amountStyle = AppTextStyles.heroAmount,
   });
 
   @override
@@ -38,18 +55,17 @@ class HeroCard extends StatelessWidget {
         vertical: Sizes.size24,
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.primarySoft, colors.secondarySoft],
-        ),
+        gradient: colors.cardGrad,
         borderRadius: BorderRadius.circular(AppRadii.tile),
+        // 2026-07-11 사용자 검수: 카드 윤곽이 흐릿해 보여 테두리 추가.
+        border: Border.all(color: colors.borderSoft),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
@@ -57,13 +73,14 @@ class HeroCard extends StatelessWidget {
                   style: AppTextStyles.caption.copyWith(color: colors.text2),
                 ),
               ),
+              if (statePill != null) statePill!,
               if (trailing != null) trailing!,
             ],
           ),
           Gaps.v10,
           Text(
             MoneyFormatter.formatAbbreviated(netAmount),
-            style: AppTextStyles.heroAmount.copyWith(color: netColor),
+            style: amountStyle.copyWith(color: netColor),
           ),
           Gaps.v16,
           BalanceVisualization(tilt: tilt),
@@ -84,6 +101,40 @@ class HeroCard extends StatelessWidget {
               ),
             ],
           ),
+          if (extra != null) ...[Gaps.v12, extra!],
+          if (quoteMessage != null) ...[
+            Gaps.v16,
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: Sizes.size14,
+                vertical: Sizes.size12,
+              ),
+              decoration: BoxDecoration(
+                color: colors.bg,
+                borderRadius: BorderRadius.circular(Sizes.size10),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.format_quote,
+                    size: Sizes.size18,
+                    color: colors.text3,
+                  ),
+                  Gaps.h8,
+                  Expanded(
+                    child: Text(
+                      quoteMessage!,
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.text,
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
