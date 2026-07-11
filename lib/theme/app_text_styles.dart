@@ -52,4 +52,27 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
     fontFeatures: [FontFeature.tabularFigures()],
   );
+
+  /// Person Detail hero 순잔액 전용(디자인 스펙: 30px, Home의 38px보다 작음).
+  static const detailAmount = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 30,
+    fontWeight: FontWeight.w600,
+    fontFeatures: [FontFeature.tabularFigures()],
+  );
+
+  /// 카드 내 섹션 제목("거래 내역", "경조사별 오고 간 마음" 등).
+  static const sectionTitle = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 17,
+    fontWeight: FontWeight.w600,
+  );
+
+  /// RelationshipRow 등 목록 행의 이름 텍스트.
+  static const rowName = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 16.5,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.3,
+  );
 }

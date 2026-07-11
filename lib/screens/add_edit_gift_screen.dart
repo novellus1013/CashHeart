@@ -1,13 +1,16 @@
-import 'package:cash_heart/constants/colors.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/models/gift.dart';
 import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/providers/gift_view_model.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
+import 'package:cash_heart/theme/app_colors.dart';
+import 'package:cash_heart/theme/app_radii.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
+import 'package:cash_heart/widgets/amount_keypad_sheet.dart';
+import 'package:cash_heart/widgets/app_chip.dart';
+import 'package:cash_heart/widgets/avatar.dart';
 import 'package:cash_heart/widgets/gift_date_picker_sheet.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +43,9 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
 
   bool _initialized = false;
 
-  GiftCategory? _currentCategory;
+  // 카테고리는 필수값이라 기본값을 미리 선택해둔다 — 선택 없이 저장하면
+  // 오류가 나던 문제(2026-07-11 검수) 방지. 기본값은 목록의 첫 항목.
+  GiftCategory? _currentCategory = GiftCategory.values.first;
 
   GiftDirection _currentDirection = GiftDirection.received;
 
@@ -63,10 +68,13 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
         _currentCategory = existing.category;
         //timestamp(ms)를 DateTime로
         _selectedDay = DateTime.fromMillisecondsSinceEpoch(existing.date);
-        _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDay!);
         _giftNoteController.text = existing.note;
       }
     }
+
+    // 신규 입력 시에도 오늘 날짜를 기본으로 채워둔다 — 비어 있으면 hint("1900.01.01")가
+    // 실제 기본값처럼 오해되던 문제(2026-07-11 검수) 방지.
+    _dateController.text = DateFormat('yyyy.MM.dd').format(_selectedDay!);
 
     _initialized = true;
   }
@@ -123,13 +131,24 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
     if (selected != null) {
       setState(() {
         _selectedDay = selected;
-        _dateController.text = DateFormat('yyyy-MM-dd').format(selected);
+        _dateController.text = DateFormat('yyyy.MM.dd').format(selected);
       });
+    }
+  }
+
+  Future<void> _onAmountTap() async {
+    final current = int.tryParse(_amountController.text.trim());
+    final entered =
+        await showAmountKeypadSheet(context, initialAmount: current);
+    if (entered != null) {
+      setState(() => _amountController.text = entered.toString());
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -148,14 +167,16 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
           appBar: AppBar(
-            title: Text(_isEdit ? '내역 수정하기' : '내역 추가하기'),
+            title: Text(_isEdit ? '내역 수정' : '내역 추가'),
             actions: [
-              ElevatedButton(
+              TextButton(
                 onPressed: _onSave,
                 child: Text(
-                  _isEdit ? '수 정' : '저 장',
+                  _isEdit ? '수정' : '저장',
                   style: TextStyle(
-                    fontWeight: FontWeight.w500,
+                    fontSize: Sizes.size16,
+                    fontWeight: FontWeight.w700,
+                    color: colors.primary,
                   ),
                 ),
               ),
@@ -176,46 +197,16 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Gaps.v20,
-                      Text('이름'),
                       Gaps.v10,
-                      TextField(
-                        enabled: false,
-                        decoration: InputDecoration(
-                          hintText: widget.personName,
-                          disabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                            color: Colors.grey,
-                          )),
-                        ),
+                      _DirectionSegmentedControl(
+                        currentDirection: _currentDirection,
+                        onChanged: (value) =>
+                            setState(() => _currentDirection = value),
                       ),
                       Gaps.v20,
-                      CupertinoSlidingSegmentedControl(
-                        backgroundColor: const Color(0xFFFFF5F3),
-                        thumbColor: _currentDirection == GiftDirection.received
-                            ? primaryColor
-                            : secondaryColor,
-                        padding: const EdgeInsets.all(3),
-                        groupValue: _currentDirection,
-                        children: {
-                          GiftDirection.received: _buildItem(
-                            label: '받은 돈',
-                            selected:
-                                _currentDirection == GiftDirection.received,
-                          ),
-                          GiftDirection.given: _buildItem(
-                            label: '준 돈',
-                            selected: _currentDirection == GiftDirection.given,
-                          ),
-                        },
-                        onValueChanged: (value) {
-                          if (value == null) return;
-
-                          setState(() {
-                            _currentDirection = value;
-                          });
-                        },
-                      ),
+                      Text('누구와'),
+                      Gaps.v10,
+                      _PersonSummaryCard(personId: widget.personId, personName: widget.personName),
                       Gaps.v20,
                       Text('금액 (필수)'),
                       Gaps.v10,
@@ -223,7 +214,9 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         maxLines: 1,
                         controller: _amountController,
-                        keyboardType: TextInputType.number,
+                        readOnly: true,
+                        showCursor: false,
+                        onTap: _onAmountTap,
                         decoration: InputDecoration(
                           hintText: "0",
                           suffix: Text('원'),
@@ -248,71 +241,50 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
                         },
                       ),
                       Gaps.v10,
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('카테고리 (필수)'),
-                                Gaps.v10,
-                                DropdownButtonFormField(
-                                  initialValue: _currentCategory,
-                                  decoration: InputDecoration(
-                                    labelText: '목록',
-                                    border: OutlineInputBorder(), // 테두리 스타일
-                                  ),
-                                  items: GiftCategory.values.map((type) {
-                                    return DropdownMenuItem(
-                                      value: type,
-                                      child: Text(type.label),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _currentCategory = value;
-                                    });
-                                  },
-                                  validator: (value) {
-                                    if (value == null) {
-                                      return "카테고리를 선택해주세요.";
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ],
-                            ),
+                      Text('경조사'),
+                      Gaps.v10,
+                      ChipRow<GiftCategory>(
+                        items: GiftCategory.values,
+                        value: _currentCategory,
+                        labelOf: (category) => category.label,
+                        iconOf: (category) => category.icon,
+                        // 2026-07-11 검수: 지인 추가의 관계 칩과 선택색 통일(방향별 틴트 제거).
+                        activeColor: colors.primary,
+                        onChanged: (value) =>
+                            setState(() => _currentCategory = value),
+                      ),
+                      if (_currentCategory == null) ...[
+                        Gaps.v4,
+                        Text(
+                          '카테고리를 선택해주세요.',
+                          style: TextStyle(
+                            fontSize: Sizes.size12,
+                            color: colors.primary,
                           ),
-                          Gaps.h20,
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('날짜 (필수)'),
-                                Gaps.v10,
-                                TextFormField(
-                                  controller: _dateController,
-                                  decoration: InputDecoration(
-                                    hintText: '1900-01-01',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  readOnly: true,
-                                  onTap: _formDatePicker,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return "날짜를 선택해주세요";
-                                    }
+                        ),
+                      ],
+                      Gaps.v20,
+                      Text('날짜'),
+                      Gaps.v10,
+                      TextFormField(
+                        controller: _dateController,
+                        decoration: InputDecoration(
+                          hintText: '날짜를 선택해주세요',
+                          prefixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+                          border: OutlineInputBorder(),
+                        ),
+                        readOnly: true,
+                        onTap: _formDatePicker,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "날짜를 선택해주세요";
+                          }
 
-                                    return null;
-                                  },
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
+                          return null;
+                        },
                       ),
                       Gaps.v10,
-                      Text('거래 내역 (필수)'),
+                      Text('메모'),
                       Gaps.v10,
                       TextFormField(
                         controller: _giftNoteController,
@@ -320,20 +292,20 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
                         maxLines: 1,
                         maxLength: 20,
                         decoration: InputDecoration(
-                          hintText: "ex) 돌 잔치 축하, (지인) 어머니 팔순 등 (20자 이하)",
+                          hintText: "한 줄 메모... (선택)",
                           border: OutlineInputBorder(),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return '내역을 입력해 주세요.';
+                            return null;
                           }
 
                           if (!personNoteRegex.hasMatch(value)) {
-                            return '내역은 완성된 한글 혹은 영문만 입력 가능합니다.';
+                            return '메모는 완성된 한글 혹은 영문만 입력 가능합니다.';
                           }
 
-                          if (value.length < 2 || value.length > 20) {
-                            return '내역은 2자 이상 20자 미만이어야 합니다.';
+                          if (value.length > 20) {
+                            return '메모는 20자 이하여야 합니다.';
                           }
 
                           return null;
@@ -351,21 +323,131 @@ class _AddEditGiftScreenState extends State<AddEditGiftScreen> {
   }
 }
 
-Widget _buildItem({
-  required String label,
-  required bool selected,
-}) {
-  return Container(
-    alignment: Alignment.center,
-    padding: const EdgeInsets.symmetric(
-      vertical: Sizes.size10,
-    ),
-    child: Text(
-      label,
-      style: TextStyle(
-        fontWeight: FontWeight.w600,
-        color: selected ? Colors.white : Colors.black,
+/// 준/받은 마음을 하나의 통합 세그먼트(공백 없이 붙은 두 반쪽)로 표현한다.
+class _DirectionSegmentedControl extends StatelessWidget {
+  final GiftDirection currentDirection;
+  final ValueChanged<GiftDirection> onChanged;
+
+  const _DirectionSegmentedControl({
+    required this.currentDirection,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadii.btn),
+      child: Container(
+        decoration: BoxDecoration(border: Border.all(color: colors.border)),
+        child: Row(
+          children: [
+            Expanded(
+              child: _DirectionSegment(
+                label: '준 마음',
+                active: currentDirection == GiftDirection.given,
+                activeColor: colors.given,
+                activeBg: colors.secondarySoft,
+                onTap: () => onChanged(GiftDirection.given),
+              ),
+            ),
+            Expanded(
+              child: _DirectionSegment(
+                label: '받은 마음',
+                active: currentDirection == GiftDirection.received,
+                activeColor: colors.received,
+                activeBg: colors.primarySoft,
+                onTap: () => onChanged(GiftDirection.received),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+}
+
+class _DirectionSegment extends StatelessWidget {
+  final String label;
+  final bool active;
+  final Color activeColor;
+  final Color activeBg;
+  final VoidCallback onTap;
+
+  const _DirectionSegment({
+    required this.label,
+    required this.active,
+    required this.activeColor,
+    required this.activeBg,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        alignment: Alignment.center,
+        color: active ? activeBg : colors.surface,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: Sizes.size14,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+            color: active ? activeColor : colors.text3,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "누구와" — 대상 지인을 아바타+이름+관계 배지로 보여준다. 이 화면은 진입 시
+/// 이미 특정 지인이 고정된 컨텍스트라 읽기 전용 표시만 한다(다른 지인으로
+/// 전환하는 기능은 범위 밖 — 2026-07-11 확인).
+class _PersonSummaryCard extends StatelessWidget {
+  final int personId;
+  final String personName;
+
+  const _PersonSummaryCard({required this.personId, required this.personName});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final person = context.watch<PersonViewModel>().getPersonById(personId);
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: Sizes.size14, vertical: Sizes.size12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: AppRadii.cardRadius,
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: [
+          Avatar(name: personName, tintSeed: personId, size: 40),
+          Gaps.h12,
+          Expanded(
+            child: Text(
+              personName,
+              style: TextStyle(
+                fontSize: Sizes.size16,
+                fontWeight: FontWeight.w600,
+                color: colors.text,
+              ),
+            ),
+          ),
+          if (person?.category != null)
+            Text(
+              person!.category!,
+              style: TextStyle(fontSize: Sizes.size12, color: colors.text3),
+            ),
+        ],
+      ),
+    );
+  }
 }

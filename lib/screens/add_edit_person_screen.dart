@@ -1,9 +1,11 @@
-import 'package:cash_heart/constants/colors.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/models/person.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
+import 'package:cash_heart/theme/app_colors.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
+import 'package:cash_heart/widgets/app_chip.dart';
+import 'package:cash_heart/widgets/avatar.dart';
 import 'package:cash_heart/widgets/custom_text_form_field.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -32,7 +34,23 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
 
   bool _initialized = false;
 
-  String? _selectedCategory = '그외';
+  // 관계 기본값은 목록의 첫 항목으로(2026-07-11 검수).
+  String? _selectedCategory = '가족';
+
+  @override
+  void initState() {
+    super.initState();
+    // 이름 입력에 따라 아바타 프리뷰/글자 수 카운터를 실시간으로 갱신.
+    _personNameController.addListener(() => setState(() {}));
+    _personNoteController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _personNameController.dispose();
+    _personNoteController.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -88,6 +106,8 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -106,14 +126,16 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
           appBar: AppBar(
-            title: Text(_isEdit ? '지인 수정하기' : '지인 추가하기'),
+            title: Text(_isEdit ? '지인 수정' : '지인 추가'),
             actions: [
-              ElevatedButton(
+              TextButton(
                 onPressed: _onSave,
                 child: Text(
-                  _isEdit ? '수 정' : '저 장',
+                  _isEdit ? '수정' : '저장',
                   style: TextStyle(
-                    fontWeight: FontWeight.w500,
+                    fontSize: Sizes.size16,
+                    fontWeight: FontWeight.w700,
+                    color: colors.primary,
                   ),
                 ),
               ),
@@ -129,13 +151,29 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Gaps.v10,
+                  Center(
+                    child: _personNameController.text.trim().isEmpty
+                        ? Icon(
+                            Icons.person_outline,
+                            size: 44,
+                            color: Theme.of(context)
+                                .extension<AppColors>()!
+                                .text3,
+                          )
+                        : Avatar(
+                            name: _personNameController.text.trim(),
+                            tintSeed: widget.personId ?? 0,
+                            size: 76,
+                          ),
+                  ),
                   Gaps.v20,
                   Text('이름'),
                   Gaps.v10,
                   CustomTextFormField(
                     controller: _personNameController,
-                    hintText: '이름',
-                    maxLength: 10,
+                    hintText: '이름 입력',
+                    maxLength: 30,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return '이름을 입력해 주세요.';
@@ -145,103 +183,51 @@ class _AddEditPersonScreenState extends State<AddEditPersonScreen> {
                         return '이름은 완성된 한글 혹은 영문만 입력 가능합니다.';
                       }
 
-                      if (value.length < 2 || value.length > 10) {
-                        return '이름은 2자 이상 10자 미만이어야 합니다.';
+                      if (value.length < 2 || value.length > 30) {
+                        return '이름은 2자 이상 30자 이하여야 합니다.';
                       }
 
                       return null;
                     },
+                  ),
+                  Gaps.v10,
+                  Text('관계'),
+                  Gaps.v10,
+                  ChipRow<String>(
+                    items: const ['가족', '친구', '직장', '지인', '그외'],
+                    value: _selectedCategory,
+                    labelOf: (category) => category,
+                    // 2026-07-11 검수: 내역 추가 화면의 경조사 칩과 선택색 통일.
+                    activeColor: colors.primary,
+                    onChanged: (value) =>
+                        setState(() => _selectedCategory = value),
                   ),
                   Gaps.v10,
                   Text('메모 (선택)'),
                   Gaps.v10,
                   CustomTextFormField(
                     controller: _personNoteController,
-                    hintText: '관계, 이메일, 전화번호, 별칭 등 (20자 이하)',
-                    maxLength: 20,
+                    hintText: '이 사람과의 관계나 기억을 적어두세요',
+                    maxLength: 200,
+                    maxLines: 3,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return null;
                       }
 
-                      if (value.length > 20) {
-                        return '메모는 20자 이하여야 합니다.';
+                      if (value.length > 200) {
+                        return '메모는 200자 이하여야 합니다.';
                       }
 
                       return null;
                     },
                   ),
-                  Gaps.v10,
-                  Text('카테고리'),
-                  Gaps.v10,
-                  CategoryChips(
-                    selectedCategory: _selectedCategory,
-                    onChanged: (value) {
-                      setState(() {
-                        if (value != null) {
-                          _selectedCategory = value;
-                        }
-                      });
-                    },
-                  )
                 ],
               ),
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class CategoryChips extends StatelessWidget {
-  final String? selectedCategory;
-  final ValueChanged<String?> onChanged;
-
-  const CategoryChips({
-    super.key,
-    this.selectedCategory,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    List<String> categories = ['가족', '친구', '직장', '지인', '그외'];
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Wrap(
-      spacing: Sizes.size8,
-      children: categories.map((category) {
-        bool isSelected = selectedCategory == category;
-
-        return ChoiceChip(
-          checkmarkColor: Colors.white,
-          padding: EdgeInsets.symmetric(
-            horizontal: Sizes.size8,
-            vertical: Sizes.size8,
-          ),
-          label: Text(
-            category,
-            style: TextStyle(
-              color: isSelected
-                  ? Colors.white
-                  : (isDark ? Colors.white70 : Colors.black87),
-            ),
-          ),
-          selectedColor: primaryColor,
-          backgroundColor: isDark ? Colors.grey.shade800 : null,
-          side: isDark && !isSelected
-              ? BorderSide(color: Colors.grey.shade600)
-              : null,
-          selected: isSelected,
-          onSelected: (selected) {
-            if (selected) {
-              onChanged(category);
-            }
-            // Don't allow deselection - category is required
-          },
-        );
-      }).toList(),
     );
   }
 }

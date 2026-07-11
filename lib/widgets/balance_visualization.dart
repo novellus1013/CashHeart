@@ -53,18 +53,23 @@ class BalanceVisualization extends StatelessWidget {
                 child: SizedBox(
                   height: barHeight,
                   width: trackWidth,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: (givenRatio * 1000).round().clamp(1, 999),
-                        child: Container(color: colors.given),
-                      ),
-                      Expanded(
-                        flex: (receivedRatio * 1000).round().clamp(1, 999),
-                        child: Container(color: colors.received),
-                      ),
-                    ],
-                  ),
+                  // compact(목록 행) 미니바는 트랙 자체엔 색을 넣지 않는다 —
+                  // 방향은 마커 위치로, 상태는 마커 색으로만 전달(2026-07-11 검수).
+                  child: compact
+                      ? Container(color: colors.borderSoft)
+                      : Row(
+                          children: [
+                            Expanded(
+                              flex: (givenRatio * 1000).round().clamp(1, 999),
+                              child: Container(color: colors.given),
+                            ),
+                            Expanded(
+                              flex:
+                                  (receivedRatio * 1000).round().clamp(1, 999),
+                              child: Container(color: colors.received),
+                            ),
+                          ],
+                        ),
                 ),
               ),
               Positioned(

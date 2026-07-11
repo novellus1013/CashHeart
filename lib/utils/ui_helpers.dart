@@ -1,65 +1,17 @@
-import 'package:cash_heart/constants/sizes.dart';
-import 'package:cash_heart/models/gift_types.dart';
+import 'package:cash_heart/widgets/confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-//유저가 form 화면에서 저장 없이 이탈하려 할 경우, 경고창 보여줌.
-Future<bool?> showWarningPopDialog(BuildContext context) async {
-  return await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-            title: Text(
-              '정말 나가시겠습니까?',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: Sizes.size20,
-              ),
-            ),
-            content: const Text(
-              '지금까지 입력한 모든 내용이 사라집니다.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  '취소',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(
-                  '나가기',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ));
+// 유저가 form 화면에서 저장 없이 이탈하려 할 경우, 경고창 보여줌.
+// 내역/지인 삭제 확인창과 동일한 ConfirmDialog UI를 재사용한다(2026-07-11 검수).
+Future<bool> showWarningPopDialog(BuildContext context) {
+  return showConfirmDialog(
+    context,
+    title: '정말 나가시겠습니까?',
+    message: '지금까지 입력한 모든 내용이 사라집니다.',
+    confirmLabel: '나가기',
+  );
 }
-
-//person_detail_screen에서 gift ctegory 별로 보여 줄 이모지와 컬러
-class GiftCategoryMeta {
-  final String emoji;
-  final Color bgColor;
-
-  const GiftCategoryMeta(this.emoji, this.bgColor);
-}
-
-const Map<GiftCategory, GiftCategoryMeta> giftCategoryMeta = {
-  GiftCategory.wedding: GiftCategoryMeta('💍', Color(0xFFFFE4E0)),
-  GiftCategory.funeral: GiftCategoryMeta('💐', Color(0xFFE9ECF1)),
-  GiftCategory.birthBaby: GiftCategoryMeta('👶', Color(0xFFFFF2CC)),
-  GiftCategory.school: GiftCategoryMeta('🎓', Color(0xFFE9F3FF)),
-  GiftCategory.job: GiftCategoryMeta('💼', Color(0xFFE4F5EE)),
-  GiftCategory.birthday: GiftCategoryMeta('🎂', Color(0xFFFFE8F6)),
-  GiftCategory.holiday: GiftCategoryMeta('🧧', Color(0xFFFFF0E0)),
-  GiftCategory.anniversary: GiftCategoryMeta('🎉', Color(0xFFFDE7E7)),
-  GiftCategory.etc: GiftCategoryMeta('🎁', Color(0xFFECECEC)),
-};
 
 //itnl 패키지를 이용한 통화 표기 방식용 함수
 class MoneyFormatter {
@@ -83,5 +35,25 @@ class MoneyFormatter {
     final eok = absAmount / 100000000;
     final formatted = eok.toStringAsFixed(1).replaceFirst(RegExp(r'\.0$'), '');
     return '${isNegative ? '-' : ''}$formatted억원';
+  }
+
+  /// design_handoff `formatWonShort` 이식 — 차트 축/촘촘한 칩 등 좁은 공간용.
+  /// 1억 이상은 "1.2억", 1만 이상은 "530만", 그 외엔 콤마 포맷("9,000").
+  static String formatWonShort(num amount) {
+    final isNegative = amount < 0;
+    final absAmount = amount.abs();
+
+    String formatted;
+    if (absAmount >= 100000000) {
+      final eok = absAmount / 100000000;
+      formatted =
+          '${eok.toStringAsFixed(1).replaceFirst(RegExp(r'\.0$'), '')}억';
+    } else if (absAmount >= 10000) {
+      formatted = '${(absAmount / 10000).round()}만';
+    } else {
+      formatted = NumberFormat.decimalPattern('ko_KR').format(absAmount);
+    }
+
+    return isNegative ? '-$formatted' : formatted;
   }
 }

@@ -1,5 +1,6 @@
 import 'package:cash_heart/models/gift.dart';
 import 'package:cash_heart/models/gift_types.dart';
+import 'package:cash_heart/models/relationship_stats.dart';
 import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:flutter/material.dart';
 
@@ -72,5 +73,27 @@ class GiftViewModel extends ChangeNotifier {
 
   List<Gift> get giftGivenList {
     return _gifts.where((g) => g.direction == GiftDirection.given).toList();
+  }
+
+  /// 캐시된 [_gifts]로부터 로컬 구성하는 person 1명의 [RelationshipStats].
+  /// Person Detail 화면(HeroCard/StreamChart 등)이 소비하는 순수 파생 값.
+  RelationshipStats get stats {
+    if (_gifts.isEmpty) return RelationshipStats.empty;
+
+    DateTime? first;
+    DateTime? last;
+    for (final gift in _gifts) {
+      final d = DateTime.fromMillisecondsSinceEpoch(gift.date);
+      if (first == null || d.isBefore(first)) first = d;
+      if (last == null || d.isAfter(last)) last = d;
+    }
+
+    return RelationshipStats(
+      received: totalReceivedById,
+      given: totalGivenById,
+      count: _gifts.length,
+      firstDate: first,
+      lastDate: last,
+    );
   }
 }

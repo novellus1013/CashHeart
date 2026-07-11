@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 enum GiftDirection {
@@ -50,6 +50,58 @@ extension GiftCategoryLabel on GiftCategory {
         return '기념일';
       case GiftCategory.etc:
         return '기타';
+    }
+  }
+}
+
+/// design_handoff `EVENT_ICON` 이식(7종) + enum에만 있는 나머지 2종(생일/기념일)
+/// 보완. TxnRow/CategoryBars 등 아이콘이 필요한 위젯이 소비한다.
+extension GiftCategoryIcon on GiftCategory {
+  IconData get icon {
+    switch (this) {
+      case GiftCategory.wedding:
+        return Icons.favorite;
+      case GiftCategory.funeral:
+        return Icons.local_florist;
+      case GiftCategory.birthBaby:
+        return Icons.child_care;
+      case GiftCategory.school:
+        return Icons.school;
+      case GiftCategory.job:
+        return Icons.work;
+      case GiftCategory.birthday:
+        return Icons.celebration;
+      case GiftCategory.holiday:
+        return Icons.festival;
+      case GiftCategory.anniversary:
+        return Icons.cake;
+      case GiftCategory.etc:
+        return Icons.redeem;
+    }
+  }
+
+  /// 윤곽선(outlined) 버전 — 경조사별 통계처럼 배경색 없이 나열되는 곳에서
+  /// 채움 아이콘보다 시각적으로 덜 무거워 보이도록 쓴다(2026-07-11 검수).
+  IconData get iconOutlined {
+    switch (this) {
+      case GiftCategory.wedding:
+        return Icons.favorite_outline;
+      case GiftCategory.funeral:
+        return Icons.local_florist_outlined;
+      case GiftCategory.birthBaby:
+        return Icons.child_care_outlined;
+      case GiftCategory.school:
+        return Icons.school_outlined;
+      case GiftCategory.job:
+        return Icons.work_outline;
+      case GiftCategory.birthday:
+        return Icons.celebration_outlined;
+      case GiftCategory.holiday:
+        return Icons.festival_outlined;
+      case GiftCategory.anniversary:
+        return Icons.cake_outlined;
+      case GiftCategory.etc:
+        return Icons.redeem_outlined;
     }
   }
 }

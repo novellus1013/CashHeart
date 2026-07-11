@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/theme/app_colors.dart';
@@ -29,65 +31,71 @@ class PillNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: Sizes.size12,
-        vertical: Sizes.size8,
-      ),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: AppRadii.pillRadius,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.09),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
+    return ClipRRect(
+      borderRadius: AppRadii.pillRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: Sizes.size12,
+            vertical: Sizes.size8,
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(items.length, (index) {
-          final isSelected = index == selectedIndex;
-          final item = items[index];
+          decoration: BoxDecoration(
+            color: colors.navBg,
+            borderRadius: AppRadii.pillRadius,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.09),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(items.length, (index) {
+              final isSelected = index == selectedIndex;
+              final item = items[index];
 
-          return GestureDetector(
-            onTap: () => onTap(index),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-              margin: EdgeInsets.symmetric(horizontal: Sizes.size4),
-              padding: EdgeInsets.symmetric(
-                horizontal: isSelected ? Sizes.size16 : Sizes.size12,
-                vertical: Sizes.size10,
-              ),
-              decoration: BoxDecoration(
-                color: isSelected ? colors.primarySoft : Colors.transparent,
-                borderRadius: AppRadii.pillRadius,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    item.icon,
-                    size: Sizes.size20,
-                    color: isSelected ? colors.primary : colors.text3,
+              return GestureDetector(
+                onTap: () => onTap(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  margin: EdgeInsets.symmetric(horizontal: Sizes.size4),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSelected ? Sizes.size16 : Sizes.size12,
+                    vertical: Sizes.size10,
                   ),
-                  if (isSelected) ...[
-                    Gaps.h4,
-                    Text(
-                      item.label,
-                      style: AppTextStyles.caption.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
+                  decoration: BoxDecoration(
+                    color: isSelected ? colors.primary : Colors.transparent,
+                    borderRadius: AppRadii.pillRadius,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        item.icon,
+                        size: Sizes.size20,
+                        color: isSelected ? Colors.white : colors.text3,
                       ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          );
-        }),
+                      if (isSelected) ...[
+                        Gaps.h4,
+                        Text(
+                          item.label,
+                          style: AppTextStyles.caption.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
