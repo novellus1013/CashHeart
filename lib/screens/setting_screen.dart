@@ -4,6 +4,7 @@ import 'package:cash_heart/providers/theme_provider.dart';
 import 'package:cash_heart/screens/onboarding_screen.dart';
 import 'package:cash_heart/screens/policy_screen.dart';
 import 'package:cash_heart/theme/app_colors.dart';
+import 'package:cash_heart/widgets/pill_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -63,7 +64,13 @@ class _SettingScreenState extends State<SettingScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: Sizes.size16),
+        // 하단 floating PillNav(MainShellScreen)에 콘텐츠가 가리지 않도록
+        // 여백 확보 — 기존에 이 화면만 누락돼 있었다(2026-07-11 실기기 확인).
+        padding: EdgeInsets.only(
+          left: Sizes.size16,
+          right: Sizes.size16,
+          bottom: PillNav.bottomClearance(context),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

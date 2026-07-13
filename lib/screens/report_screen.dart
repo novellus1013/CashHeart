@@ -9,6 +9,7 @@ import 'package:cash_heart/utils/ui_helpers.dart';
 import 'package:cash_heart/widgets/avatar.dart';
 import 'package:cash_heart/widgets/balance_visualization.dart';
 import 'package:cash_heart/widgets/donut_chart.dart';
+import 'package:cash_heart/widgets/pill_nav.dart';
 import 'package:cash_heart/widgets/trend_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -45,7 +46,7 @@ class _ReportScreenState extends State<ReportScreen> {
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               // 하단 floating PillNav(MainShellScreen)에 가리지 않도록 여백 확보.
-              padding: EdgeInsets.only(bottom: Sizes.size96 + Sizes.size24),
+              padding: EdgeInsets.only(bottom: PillNav.bottomClearance(context)),
               child: Column(
                 children: [
                   _NetSummaryCard(
@@ -71,7 +72,6 @@ class _ReportScreenState extends State<ReportScreen> {
                     peakMonths: vm.peakMonths,
                   ),
                   _YoyComparisonSection(changePercent: vm.yoyChangePercent),
-                  const _CardShareTeaser(),
                   Gaps.v32,
                 ],
               ),
@@ -810,63 +810,3 @@ class _InsightRow extends StatelessWidget {
   }
 }
 
-/// 온보딩 슬라이드에 있던 카드 공유 소개를 대신하는 안내 배너(2026-07-11).
-/// 실제 공유 액션은 아직 스텁이라(person_detail_screen._onCardShare와 동일 문구),
-/// 여기서도 "다음 업데이트" 안내만 보여준다 — 과장 없이 준비 중임을 알린다.
-class _CardShareTeaser extends StatelessWidget {
-  const _CardShareTeaser();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<AppColors>()!;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          Sizes.size20, Sizes.size16, Sizes.size20, 0),
-      child: Material(
-        color: colors.secondarySoft,
-        borderRadius: BorderRadius.circular(Sizes.size16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(Sizes.size16),
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('카드 공유는 다음 업데이트에서 만나요.')),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(Sizes.size16),
-            child: Row(
-              children: [
-                Icon(Icons.auto_awesome, size: 20, color: colors.secondary),
-                Gaps.h12,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '함께한 시간을 카드로 나눠보세요',
-                        style: TextStyle(
-                          fontSize: Sizes.size14,
-                          fontWeight: FontWeight.w600,
-                          color: colors.text,
-                        ),
-                      ),
-                      Gaps.v2,
-                      Text(
-                        '준비 중이에요. 곧 만나요.',
-                        style: TextStyle(
-                            fontSize: Sizes.size12, color: colors.text3),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right,
-                    size: Sizes.size20, color: colors.text3),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

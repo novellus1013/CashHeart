@@ -15,6 +15,7 @@ import 'package:cash_heart/utils/ui_helpers.dart';
 import 'package:cash_heart/widgets/app_bottom_sheet.dart';
 import 'package:cash_heart/widgets/app_chip.dart';
 import 'package:cash_heart/widgets/hero_card.dart';
+import 'package:cash_heart/widgets/pill_nav.dart';
 import 'package:cash_heart/widgets/relationship_row.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -186,33 +187,46 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-      floatingActionButton: persons.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              heroTag: null,
-              backgroundColor: colors.primary,
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => AddEditPersonScreen(),
-                ));
-              },
-              icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
-              label: const Text('지인 추가', style: TextStyle(color: Colors.white)),
+      // FAB를 Scaffold의 floatingActionButton 슬롯(Padding으로 감싸는 방식)에
+      // 두면 endFloat 위치 계산이 예상과 다르게 동작해 화면 중간에 떠버리는
+      // 버그가 실기기에서 확인됐다(2026-07-11) — PillNav와 동일하게 Stack +
+      // Positioned로 직접 좌표를 지정해 완전히 예측 가능하게 만든다.
+      body: Stack(
+        children: [
+          persons.isEmpty
+              ? const _EmptyPersonBox()
+              : _HomeBody(
+                  tabs: tabs,
+                  selectedIndex: selectedIndex,
+                  onTabChanged: (index) =>
+                      setState(() => selectedIndex = index),
+                  filteredPersons: filteredPersons,
+                  statsByPerson: personVm.statsByPerson,
+                  personVm: personVm,
+                  periodLabel: _periodLabel(_period),
+                  periodGiven: _periodGiven ?? personVm.totalGiven,
+                  periodReceived: _periodReceived ?? personVm.totalReceived,
+                  onPeriodTap: _onPeriodSheetOpen,
+                ),
+          if (persons.isNotEmpty)
+            Positioned(
+              right: Sizes.size16,
+              bottom: PillNav.bottomClearance(context),
+              child: FloatingActionButton.extended(
+                heroTag: null,
+                backgroundColor: colors.primary,
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => AddEditPersonScreen(),
+                  ));
+                },
+                icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
+                label:
+                    const Text('지인 추가', style: TextStyle(color: Colors.white)),
+              ),
             ),
-      body: persons.isEmpty
-          ? const _EmptyPersonBox()
-          : _HomeBody(
-              tabs: tabs,
-              selectedIndex: selectedIndex,
-              onTabChanged: (index) => setState(() => selectedIndex = index),
-              filteredPersons: filteredPersons,
-              statsByPerson: personVm.statsByPerson,
-              personVm: personVm,
-              periodLabel: _periodLabel(_period),
-              periodGiven: _periodGiven ?? personVm.totalGiven,
-              periodReceived: _periodReceived ?? personVm.totalReceived,
-              onPeriodTap: _onPeriodSheetOpen,
-            ),
+        ],
+      ),
     );
   }
 }
@@ -348,7 +362,7 @@ class _PersonList extends StatelessWidget {
 
     return ListView.separated(
       // 하단 floating PillNav(MainShellScreen)에 목록이 가리지 않도록 여백 확보.
-      padding: EdgeInsets.only(bottom: Sizes.size96 + Sizes.size24),
+      padding: EdgeInsets.only(bottom: PillNav.bottomClearance(context)),
       itemCount: filteredPersons.length,
       separatorBuilder: (context, index) => Gaps.v12,
       itemBuilder: (context, index) {

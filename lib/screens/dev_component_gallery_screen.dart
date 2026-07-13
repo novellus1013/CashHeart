@@ -6,6 +6,7 @@ import 'package:cash_heart/screens/migration_screen.dart';
 import 'package:cash_heart/screens/onboarding_screen.dart';
 import 'package:cash_heart/theme/app_colors.dart';
 import 'package:cash_heart/theme/app_text_styles.dart';
+import 'package:cash_heart/utils/share_card_case.dart';
 import 'package:cash_heart/widgets/balance_visualization.dart';
 import 'package:cash_heart/widgets/hero_card.dart';
 import 'package:cash_heart/widgets/pill_nav.dart';
@@ -127,12 +128,12 @@ class _DevComponentGalleryScreenState extends State<DevComponentGalleryScreen> {
                       MaterialPageRoute(
                         builder: (_) => CardShareScreen(
                           personName: '김민준',
-                          tintSeed: 0,
                           stats: const RelationshipStats(
                             received: 860000,
                             given: 540000,
-                            count: 5,
+                            count: 6,
                           ),
+                          caseType: ShareCardCase.soulmate,
                         ),
                       ),
                     ),

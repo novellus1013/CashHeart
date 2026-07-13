@@ -2,6 +2,7 @@ import 'package:cash_heart/models/gift.dart';
 import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/models/relationship_stats.dart';
 import 'package:cash_heart/repositories/gift_repository.dart';
+import 'package:cash_heart/utils/share_card_case.dart';
 import 'package:flutter/material.dart';
 
 class GiftViewModel extends ChangeNotifier {
@@ -16,14 +17,32 @@ class GiftViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  ShareCardCase _shareCardCase = ShareCardCase.none;
+
+  /// 이 person의 카드 공유 자격 케이스 — `none`이면 person_detail의 공유
+  /// 버튼을 숨긴다("둘 다 아니면 공유 버튼 미노출", Sprint 4 스펙).
+  ShareCardCase get shareCardCase => _shareCardCase;
+
   Future<void> loadGifts() async {
     _isLoading = true;
     notifyListeners();
 
     _gifts = await _giftRepository.getGiftsListByPersonId(personId);
+    _shareCardCase = await _loadShareCardCase();
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<ShareCardCase> _loadShareCardCase() async {
+    if (_gifts.isEmpty) return ShareCardCase.none;
+
+    final rankInfo = await _giftRepository.getTotalRank(personId);
+    return determineShareCardCase(
+      stats: stats,
+      rank: rankInfo.rank,
+      totalPersonsWithRecords: rankInfo.totalPersonsWithRecords,
+    );
   }
 
   Gift? getOneGiftByGiftId(int giftId) {

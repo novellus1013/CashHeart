@@ -90,8 +90,13 @@ class _StreamChartPainter extends CustomPainter {
       1.0,
     ].reduce((a, b) => a > b ? a : b);
 
-    double yUp(double v) => mid - (v / maxV) * (mid - 10);
-    double yDown(double v) => mid + (v / maxV) * (mid - 10);
+    // "받은 마음"/"준 마음" 라벨(10.5sp, 상하단 여백 4px)이 차지하는 공간을
+    // 채워진 영역이 절대 침범하지 않도록 위/아래 각각 [labelMargin]만큼 비워둔다.
+    // 기존엔 여백이 10px뿐이라 극단적으로 큰 값(한쪽으로 크게 치우친 데이터)에서
+    // 영역이 라벨 바로 아래까지 꽉 차 라벨과 겹쳐 보였다(2026-07-11 실기기 확인).
+    const labelMargin = 22.0;
+    double yUp(double v) => mid - (v / maxV) * (mid - labelMargin);
+    double yDown(double v) => mid + (v / maxV) * (mid - labelMargin);
 
     Path linePath(List<Offset> pts, double Function(double) yOf) {
       final path = Path();

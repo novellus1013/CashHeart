@@ -126,4 +126,91 @@ void main() {
       expect(entry.lastDate, DateTime(2024, 1, 1));
     });
   });
+
+  group('GiftRepository.getTotalRank', () {
+    test('기록이 없는 person은 rank 0, 전체 인원수만 반환한다', () async {
+      final personA = await insertPerson('기록없음');
+      final personB = await insertPerson('기록있음');
+      await insertGift(
+        personId: personB,
+        amount: 10000,
+        direction: GiftDirection.received,
+        date: DateTime(2024, 1, 1),
+      );
+
+      final result = await repository.getTotalRank(personA);
+
+      expect(result.rank, 0);
+      expect(result.totalPersonsWithRecords, 1);
+    });
+
+    test('총액(given+received) 내림차순으로 순위를 매긴다', () async {
+      final richest = await insertPerson('총액1위');
+      final middle = await insertPerson('총액2위');
+      final poorest = await insertPerson('총액3위');
+
+      await insertGift(
+        personId: richest,
+        amount: 500000,
+        direction: GiftDirection.received,
+        date: DateTime(2024, 1, 1),
+      );
+      await insertGift(
+        personId: middle,
+        amount: 200000,
+        direction: GiftDirection.given,
+        date: DateTime(2024, 1, 1),
+      );
+      await insertGift(
+        personId: poorest,
+        amount: 10000,
+        direction: GiftDirection.given,
+        date: DateTime(2024, 1, 1),
+      );
+
+      final richestRank = await repository.getTotalRank(richest);
+      final middleRank = await repository.getTotalRank(middle);
+      final poorestRank = await repository.getTotalRank(poorest);
+
+      expect(richestRank.rank, 1);
+      expect(middleRank.rank, 2);
+      expect(poorestRank.rank, 3);
+      expect(richestRank.totalPersonsWithRecords, 3);
+      expect(middleRank.totalPersonsWithRecords, 3);
+      expect(poorestRank.totalPersonsWithRecords, 3);
+    });
+
+    test('총액이 같으면 동순위를 부여한다(다음 순위는 동률 인원수만큼 건너뜀)', () async {
+      final tiedA = await insertPerson('동률A');
+      final tiedB = await insertPerson('동률B');
+      final lower = await insertPerson('그다음');
+
+      await insertGift(
+        personId: tiedA,
+        amount: 100000,
+        direction: GiftDirection.received,
+        date: DateTime(2024, 1, 1),
+      );
+      await insertGift(
+        personId: tiedB,
+        amount: 100000,
+        direction: GiftDirection.given,
+        date: DateTime(2024, 1, 1),
+      );
+      await insertGift(
+        personId: lower,
+        amount: 50000,
+        direction: GiftDirection.given,
+        date: DateTime(2024, 1, 1),
+      );
+
+      final tiedARank = await repository.getTotalRank(tiedA);
+      final tiedBRank = await repository.getTotalRank(tiedB);
+      final lowerRank = await repository.getTotalRank(lower);
+
+      expect(tiedARank.rank, 1);
+      expect(tiedBRank.rank, 1);
+      expect(lowerRank.rank, 3);
+    });
+  });
 }

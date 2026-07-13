@@ -57,5 +57,16 @@ void main() {
       expect(sameDay.years, 1);
       expect(fiveYears.years, 5);
     });
+
+    test('dominantPercent는 우세한 쪽(받은/준 마음 중 큰 쪽)의 비율을 반올림해 반환한다', () {
+      const evenSplit = RelationshipStats(received: 500000, given: 500000, count: 2);
+      const givenDominant = RelationshipStats(received: 300000, given: 700000, count: 3);
+      const receivedDominant = RelationshipStats(received: 233333, given: 100000, count: 2);
+
+      expect(evenSplit.dominantPercent, 50);
+      expect(givenDominant.dominantPercent, 70);
+      expect(receivedDominant.dominantPercent, 70);
+      expect(RelationshipStats.empty.dominantPercent, 0);
+    });
   });
 }
