@@ -1,5 +1,6 @@
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
+import 'package:cash_heart/constants/urls.dart';
 import 'package:cash_heart/models/relationship_stats.dart';
 import 'package:cash_heart/theme/app_colors.dart';
 import 'package:cash_heart/theme/app_radii.dart';
@@ -18,7 +19,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 /// 않고 이미지만 도착해, 링크가 통째로 사라지는 걸 실기기에서 확인했다. 이미지
 /// 픽셀 안에 QR을 넣어야 어떤 메신저를 거치든(캡처·재전달까지) 링크가 함께
 /// 살아남는다 — caption 텍스트는 QR을 지원하는 앱에서 원탭 편의를 위해 계속 함께 보낸다.
-const _qrLandingUrl = 'https://cashheart.novelus.dev/';
 
 /// design_handoff `ShareCard` 이식. 배경은 관계 균형 상태에 따라 자동으로
 /// 정해진다. Sprint 4부터 케이스별 칭호·로고·워드마크를 포함한 실제 공유 이미지
@@ -70,6 +70,12 @@ class ShareCardPreview extends StatelessWidget {
     this.useHonorific = true,
   });
 
+  // 우상단 로고 워터마크 크기/offset — 2026-07-11 실기기 피드백으로 여러 차례
+  // 튜닝된 값이라(1/4만 노출 → 조금 더 드러나게) 두 곳(Image 크기, Positioned
+  // offset)이 항상 같이 바뀌어야 한다 — 이름 붙여 한 곳에서만 조정하면 되게 한다.
+  static const _watermarkSize = 380.0;
+  static const _watermarkOffset = -165.0;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;
@@ -104,11 +110,11 @@ class ShareCardPreview extends StatelessWidget {
             // 드러나게 좌하단으로 조금만 당겨줘" — 완전한 절반 offset(-190)이면
             // 딱 1/4만 보였는데, 그보다 조금 더 보이게 미세 조정).
             Positioned(
-              top: -165,
-              right: -165,
+              top: _watermarkOffset,
+              right: _watermarkOffset,
               child: Opacity(
                 opacity: 0.08,
-                child: Image.asset(logoAsset, width: 380, height: 380),
+                child: Image.asset(logoAsset, width: _watermarkSize, height: _watermarkSize),
               ),
             ),
             Padding(
@@ -190,15 +196,15 @@ class ShareCardPreview extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: EdgeInsets.all(Sizes.size4),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(Sizes.size4),
                         ),
                         child: QrImageView(
-                          data: _qrLandingUrl,
+                          data: shareLandingUrl,
                           version: QrVersions.auto,
-                          size: 40,
+                          size: Sizes.size40,
                           backgroundColor: Colors.white,
                         ),
                       ),
@@ -227,7 +233,11 @@ class _AmountRow extends StatelessWidget {
 
     return Row(
       children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(
+          width: Sizes.size8,
+          height: Sizes.size8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         Gaps.h8,
         Expanded(
           child: Text(

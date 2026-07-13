@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
+import 'package:cash_heart/constants/urls.dart';
 import 'package:cash_heart/models/relationship_stats.dart';
 import 'package:cash_heart/theme/app_colors.dart';
 import 'package:cash_heart/utils/share_card_case.dart';
@@ -32,10 +33,6 @@ class CardShareScreen extends StatefulWidget {
   @override
   State<CardShareScreen> createState() => _CardShareScreenState();
 }
-
-/// 카드가 도착하는 랜딩 링크 — 이미지 안 QR 대신 공유 caption 텍스트로 함께
-/// 전달한다(채팅 앱에서 자동으로 눌리는 링크가 되어 QR 스캔보다 마찰이 적음).
-const _shareLandingUrl = 'https://cashheart.novelus.dev/';
 
 class _CardShareScreenState extends State<CardShareScreen> {
   final _captureKey = GlobalKey();
@@ -67,7 +64,11 @@ class _CardShareScreenState extends State<CardShareScreen> {
   @override
   void initState() {
     super.initState();
-    _templateFuture = loadShareTemplate(widget.caseType).then((template) {
+    _templateFuture = _startLoadingTemplate();
+  }
+
+  Future<ShareTemplate> _startLoadingTemplate() {
+    return loadShareTemplate(widget.caseType).then((template) {
       final initial = pickRandomMessage(template.messages);
       setState(() {
         _template = template;
@@ -139,7 +140,7 @@ class _CardShareScreenState extends State<CardShareScreen> {
           _shareButtonKey.currentContext?.findRenderObject() as RenderBox?;
       final result = await SharePlus.instance.share(
         ShareParams(
-          text: 'CashHeart로 만든 우리 사이 마음 카드예요\n$_shareLandingUrl',
+          text: 'CashHeart로 만든 우리 사이 마음 카드예요\n$shareLandingUrl',
           files: [XFile(file.path)],
           sharePositionOrigin: buttonBox == null
               ? null
@@ -172,6 +173,33 @@ class _CardShareScreenState extends State<CardShareScreen> {
       body: FutureBuilder<ShareTemplate>(
         future: _templateFuture,
         builder: (context, snapshot) {
+          // hasError를 확인하지 않으면 loadShareTemplate() 실패 시(자산 로드
+          // 오류 등) _template이 계속 null인 채로 스피너가 영구히 멈춘다
+          // (2026-07-12 코드 리뷰에서 발견) — 에러 상태와 재시도 버튼을 추가한다.
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '카드를 준비하는 중 문제가 생겼어요.',
+                    style: TextStyle(color: colors.text2),
+                  ),
+                  Gaps.v10,
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _templateFuture = _startLoadingTemplate();
+                      });
+                    },
+                    child: const Text('다시 시도'),
+                  ),
+                ],
+              ),
+            );
+          }
+
           if (snapshot.connectionState != ConnectionState.done ||
               _template == null) {
             return const Center(child: CircularProgressIndicator());
