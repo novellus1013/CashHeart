@@ -4,8 +4,14 @@ import 'package:cash_heart/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// A(권장) — 닫기 가능한 다이얼로그. B(강제) — 전체 화면, 닫기 불가.
-/// 실제 In-App Update API/강제 업데이트 정책 판단은 Sprint 5 소유 — 이 위젯은
-/// 레이아웃 2종만 제공한다.
+///
+/// Sprint 5 결정(2026-07-13): v2.0은 `recommended`만 자동 트리거한다
+/// (`MainShellScreen._checkForUpdate` + `UpdatePolicyService`). `forced`는
+/// 레이아웃만 남겨두고 자동 트리거는 만들지 않았다 — 로컬 상수 비교 방식은
+/// 이미 설치된 구버전에 소급 적용이 안 되는 구조적 한계가 있어, 그 위에 강제
+/// 트리거까지 자동화하는 비용 대비 실익이 낮다는 판단(`docs/sprints/ROADMAP.md`
+/// Sprint 5 참고). 향후 정말 치명적인 이슈가 생기면 이 variant를 수동으로
+/// 활용할 수 있다.
 enum UpdateDialogVariant { recommended, forced }
 
 class UpdateDialog extends StatelessWidget {

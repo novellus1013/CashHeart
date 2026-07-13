@@ -234,10 +234,13 @@ void main() {
       });
       await db.close();
 
-      await AppDatabase.maybeBackupBeforeUpgrade(
+      final migrated = await AppDatabase.maybeBackupBeforeUpgrade(
         path: dbPath,
         targetVersion: 3,
       );
+      // Sprint 5: 업그레이드가 실제로 일어날 예정이었음을 true로 보고해야
+      // MainShellScreen이 MigrationScreen을 노출할 수 있다.
+      expect(migrated, isTrue);
 
       // fake path_provider가 가리키는 documents 디렉토리 하위에 실제로
       // backups/2_to_3_<epochMs>/persons.csv, gifts.csv가 생성되어야 한다.
@@ -269,10 +272,11 @@ void main() {
       final dbPath = p.join(dbDir.path, 'does_not_exist.db');
 
       // 예외 없이 즉시 반환되어야 한다 (databaseExists == false 분기).
-      await AppDatabase.maybeBackupBeforeUpgrade(
+      final migrated = await AppDatabase.maybeBackupBeforeUpgrade(
         path: dbPath,
         targetVersion: 3,
       );
+      expect(migrated, isFalse);
 
       // 백업 대상 파일 자체가 없었으므로 새로 생성된 것도 없어야 한다.
       expect(File(dbPath).existsSync(), isFalse);
@@ -294,10 +298,11 @@ void main() {
       await db.close();
 
       // 예외 없이 완료되어야 한다 (currentVersion(3) >= targetVersion(3)).
-      await AppDatabase.maybeBackupBeforeUpgrade(
+      final migrated = await AppDatabase.maybeBackupBeforeUpgrade(
         path: dbPath,
         targetVersion: 3,
       );
+      expect(migrated, isFalse);
 
       final backupsRoot = Directory(p.join(fakeDocumentsDir.path, 'backups'));
       expect(backupsRoot.existsSync(), isFalse);
