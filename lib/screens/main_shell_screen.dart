@@ -111,6 +111,8 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 시스템 네비게이션 바 색 지정은 main.dart의 MaterialApp.builder에서
+    // 전역으로 처리한다(push된 화면까지 일괄 적용하기 위해, 2026-07-11).
     return ChangeNotifierProvider.value(
       value: _reportVm,
       child: Scaffold(
@@ -127,7 +129,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 24,
+              // 시스템 네비게이션 바 인셋(제스처 바/3버튼 바 높이)을 더하지
+              // 않으면 PillNav 하단이 시스템 바에 가려 반쯤 잘려 보인다
+              // (2026-07-11 실기기 피드백).
+              bottom: 24 + MediaQuery.of(context).padding.bottom,
               child: Center(
                 child: PillNav(
                   items: _items,

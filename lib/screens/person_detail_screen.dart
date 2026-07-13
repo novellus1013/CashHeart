@@ -1,15 +1,19 @@
+import 'package:cash_heart/config/feature_flags.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/models/gift.dart';
 import 'package:cash_heart/models/gift_types.dart';
+import 'package:cash_heart/models/relationship_stats.dart';
 import 'package:cash_heart/providers/gift_view_model.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/screens/add_edit_gift_screen.dart';
 import 'package:cash_heart/screens/add_edit_person_screen.dart';
+import 'package:cash_heart/screens/card_share_screen.dart';
 import 'package:cash_heart/theme/app_colors.dart';
 import 'package:cash_heart/theme/app_text_styles.dart';
 import 'package:cash_heart/theme/balance_state.dart';
 import 'package:cash_heart/utils/balance_copy.dart';
+import 'package:cash_heart/utils/share_card_case.dart';
 import 'package:cash_heart/widgets/app_bottom_sheet.dart';
 import 'package:cash_heart/widgets/category_bars.dart';
 import 'package:cash_heart/widgets/confirm_dialog.dart';
@@ -48,9 +52,20 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
     }
   }
 
-  void _onCardShare(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('카드 공유는 다음 업데이트에서 만나요.')),
+  void _onCardShare(
+    BuildContext context,
+    String personName,
+    RelationshipStats stats,
+    ShareCardCase caseType,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CardShareScreen(
+          personName: personName,
+          stats: stats,
+          caseType: caseType,
+        ),
+      ),
     );
   }
 
@@ -146,11 +161,18 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         centerTitle: false,
         title: Text(personName),
         actions: [
-          IconButton(
-            onPressed: () => _onCardShare(context),
-            icon: const Icon(Icons.ios_share_outlined),
-            tooltip: '카드 공유',
-          ),
+          if (FeatureFlags.cardShareEnabled &&
+              giftVm.shareCardCase != ShareCardCase.none)
+            IconButton(
+              onPressed: () => _onCardShare(
+                context,
+                personName,
+                stats,
+                giftVm.shareCardCase,
+              ),
+              icon: const Icon(Icons.ios_share_outlined),
+              tooltip: '카드 공유',
+            ),
           IconButton(
             onPressed: () => _onMore(context, personVm, personName),
             icon: const Icon(Icons.more_horiz),

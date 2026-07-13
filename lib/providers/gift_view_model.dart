@@ -1,8 +1,11 @@
+import 'package:cash_heart/config/feature_flags.dart';
 import 'package:cash_heart/models/gift.dart';
 import 'package:cash_heart/models/gift_types.dart';
 import 'package:cash_heart/models/relationship_stats.dart';
 import 'package:cash_heart/repositories/gift_repository.dart';
+import 'package:cash_heart/utils/share_card_case.dart';
 import 'package:flutter/material.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 class GiftViewModel extends ChangeNotifier {
   final GiftRepository _giftRepository;
@@ -16,14 +19,47 @@ class GiftViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  ShareCardCase _shareCardCase = ShareCardCase.none;
+
+  /// 이 person의 카드 공유 자격 케이스 — `none`이면 person_detail의 공유
+  /// 버튼을 숨긴다("둘 다 아니면 공유 버튼 미노출", Sprint 4 스펙).
+  ShareCardCase get shareCardCase => _shareCardCase;
+
   Future<void> loadGifts() async {
     _isLoading = true;
     notifyListeners();
 
     _gifts = await _giftRepository.getGiftsListByPersonId(personId);
+    _shareCardCase = await _loadShareCardCase();
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<ShareCardCase> _loadShareCardCase() async {
+    // FeatureFlags.cardShareEnabled=false면 결과가 UI에 절대 쓰이지 않으므로
+    // getTotalRank()의 전체 테이블 스캔 쿼리를 아예 건너뛴다(2026-07-12 코드
+    // 리뷰: 플래그가 꺼져 있어도 매 loadGifts()마다 불필요하게 실행되고 있었음).
+    if (!FeatureFlags.cardShareEnabled || _gifts.isEmpty) {
+      return ShareCardCase.none;
+    }
+
+    // getTotalRank()는 실패 시 rethrow하는 기존 Repository 관례를 따른다 —
+    // 여기서 잡지 않으면 loadGifts()의 _isLoading=false가 실행되지 않아
+    // person_detail_screen이 로딩 스피너에서 멈춘다(2026-07-12 코드 리뷰에서
+    // 발견). 카드 공유 자격은 부가 정보이므로 실패해도 화면 자체는 떠야 한다.
+    try {
+      final rankInfo = await _giftRepository.getTotalRank(personId);
+      return determineShareCardCase(
+        stats: stats,
+        rank: rankInfo.rank,
+        totalPersonsWithRecords: rankInfo.totalPersonsWithRecords,
+      );
+    } catch (e, st) {
+      debugPrint('_loadShareCardCase error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      return ShareCardCase.none;
+    }
   }
 
   Gift? getOneGiftByGiftId(int giftId) {

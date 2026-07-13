@@ -37,6 +37,14 @@ class RelationshipStats {
     return RelationshipDirection.even;
   }
 
+  /// 우세한 한쪽(준/받은 마음 중 큰 쪽)이 전체에서 차지하는 비율(0~100, 반올림).
+  /// 카드 공유 케이스 판정(share_card_case.dart)에 쓰인다.
+  int get dominantPercent {
+    if (total == 0) return 0;
+    final dominant = received > given ? received : given;
+    return (dominant / total * 100).round();
+  }
+
   /// 관계가 이어져 온 연수. 기록이 있으면 최소 1년.
   int get years {
     if (firstDate == null || lastDate == null) return 0;

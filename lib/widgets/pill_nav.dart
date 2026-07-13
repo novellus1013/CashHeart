@@ -27,6 +27,16 @@ class PillNav extends StatelessWidget {
     required this.onTap,
   });
 
+  /// 화면 콘텐츠가 이 플로팅 내비게이션과 겹치지 않도록 예약해야 하는 하단
+  /// 여백. `MainShellScreen`이 PillNav를 `24 + 시스템 인셋(MediaQuery.padding.
+  /// bottom)`만큼 띄워서 그리므로, 콘텐츠 쪽 padding도 같은 인셋을 더해야
+  /// 기기별 안드로이드 네비게이션 바 높이(제스처 바/3버튼 바)와 무관하게 안전하다.
+  /// (2026-07-11: 안드로이드 시스템 바 색을 억지로 칠하는 방식은 API 35+
+  /// edge-to-edge 강제 적용 기기에서 무시될 수 있다는 지적으로, "겹치지 않게
+  /// 안전 영역을 확보"하는 이 방식으로 대체 — 색 지정은 구버전 호환용으로만 유지.)
+  static double bottomClearance(BuildContext context) =>
+      Sizes.size96 + Sizes.size24 + MediaQuery.of(context).padding.bottom;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<AppColors>()!;

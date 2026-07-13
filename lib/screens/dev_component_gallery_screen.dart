@@ -1,3 +1,4 @@
+import 'package:cash_heart/config/feature_flags.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/models/relationship_stats.dart';
@@ -6,6 +7,7 @@ import 'package:cash_heart/screens/migration_screen.dart';
 import 'package:cash_heart/screens/onboarding_screen.dart';
 import 'package:cash_heart/theme/app_colors.dart';
 import 'package:cash_heart/theme/app_text_styles.dart';
+import 'package:cash_heart/utils/share_card_case.dart';
 import 'package:cash_heart/widgets/balance_visualization.dart';
 import 'package:cash_heart/widgets/hero_card.dart';
 import 'package:cash_heart/widgets/pill_nav.dart';
@@ -122,22 +124,27 @@ class _DevComponentGalleryScreenState extends State<DevComponentGalleryScreen> {
                 spacing: Sizes.size8,
                 runSpacing: Sizes.size8,
                 children: [
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => CardShareScreen(
-                          personName: '김민준',
-                          tintSeed: 0,
-                          stats: const RelationshipStats(
-                            received: 860000,
-                            given: 540000,
-                            count: 5,
+                  // v2.0에서는 FeatureFlags.cardShareEnabled=false로 카드 공유가
+                  // 전면 비활성화돼 있다 — dev 갤러리도 같은 플래그를 따라야
+                  // person_detail 진입점을 숨긴 의미가 있다(2026-07-12 코드
+                  // 리뷰에서 갤러리가 플래그를 우회하고 있음을 발견해 수정).
+                  if (FeatureFlags.cardShareEnabled)
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CardShareScreen(
+                            personName: '김민준',
+                            stats: const RelationshipStats(
+                              received: 860000,
+                              given: 540000,
+                              count: 6,
+                            ),
+                            caseType: ShareCardCase.soulmate,
                           ),
                         ),
                       ),
+                      child: const Text('Card Share'),
                     ),
-                    child: const Text('Card Share'),
-                  ),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(

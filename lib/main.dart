@@ -4,9 +4,11 @@ import 'package:cash_heart/providers/theme_provider.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
 import 'package:cash_heart/screens/main_shell_screen.dart';
 import 'package:cash_heart/services/mock_data_service.dart';
+import 'package:cash_heart/theme/app_colors.dart';
 import 'package:cash_heart/theme/app_theme.dart';
 import 'package:cash_heart/utils/root_messenger.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -99,6 +101,24 @@ class MyApp extends StatelessWidget {
             themeMode: themeProvider.themeMode,
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
+            // 시스템 네비게이션 바 색을 MainShellScreen 하나에만 지정하면 그
+            // 위로 push된 화면(person_detail 등)에선 적용되지 않는다(pushed
+            // route는 MainShellScreen의 위젯 트리 밖이라 AnnotatedRegion을
+            // 상속하지 않음) — builder로 감싸 모든 화면에 일괄 적용한다
+            // (2026-07-11 실기기 확인: 상세 화면에서 시스템 바가 다시 비쳐 보임).
+            builder: (context, child) {
+              final colors = Theme.of(context).extension<AppColors>()!;
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return AnnotatedRegion<SystemUiOverlayStyle>(
+                value: SystemUiOverlayStyle(
+                  systemNavigationBarColor: colors.bg,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                  systemNavigationBarIconBrightness:
+                      isDark ? Brightness.light : Brightness.dark,
+                ),
+                child: child!,
+              );
+            },
           );
         },
       ),

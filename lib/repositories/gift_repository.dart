@@ -157,6 +157,43 @@ class GiftRepository {
     }
   }
 
+  /// person 1명의 총액(given+received) 순위 — 카드 공유 "영혼의 동반자" 케이스의
+  /// 상위권 판정(share_card_case.dart)에 쓰인다. rank는 총액 내림차순 1-indexed,
+  /// totalPersonsWithRecords는 거래 기록이 1건 이상 있는 person 수.
+  Future<({int rank, int totalPersonsWithRecords})> getTotalRank(
+      int personId) async {
+    try {
+      final db = await _db;
+
+      final result = await db.rawQuery('''
+      WITH totals AS (
+        SELECT person_id, SUM(amount) AS total FROM gifts GROUP BY person_id
+      )
+      SELECT
+        (SELECT COUNT(*) FROM totals) AS total_persons,
+        (SELECT COUNT(*) FROM totals t2 WHERE t2.total > t1.total) + 1 AS rank
+      FROM totals t1 WHERE t1.person_id = ?
+    ''', [personId]);
+
+      if (result.isEmpty) {
+        final countResult = await db.rawQuery(
+            'SELECT COUNT(DISTINCT person_id) AS c FROM gifts');
+        final totalPersons = (countResult.first['c'] as num?)?.toInt() ?? 0;
+        return (rank: 0, totalPersonsWithRecords: totalPersons);
+      }
+
+      final row = result.first;
+      return (
+        rank: (row['rank'] as num?)?.toInt() ?? 0,
+        totalPersonsWithRecords: (row['total_persons'] as num?)?.toInt() ?? 0,
+      );
+    } catch (e, st) {
+      debugPrint('getTotalRank error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      rethrow;
+    }
+  }
+
   /// Home hero 카드의 기간 필터(최근 1/3/6개월·1년·전체)용 준/받은 마음 합계.
   /// [sinceMs]가 null이면 전체 기간(필터 없음).
   Future<({int given, int received})> getTotalsSince(int? sinceMs) async {
