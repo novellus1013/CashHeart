@@ -215,4 +215,7 @@ git 훅이 아니라 Claude Code 훅으로 구현. `git commit` Bash 호출을 �
 
 ## MCP (`.mcp.json`)
 
-**미채택** (Sprint 0 결정). Sentry/GitHub MCP는 secret 관리 부담 대비 현 시점 필요성이 낮아 도입하지 않는다. Sprint 6 CI/출시 운영 단계에서 재검토.
+**미채택.** Sprint 0에서 보류 후 Sprint 6에서 항목별로 재검토해 확정:
+
+- **GitHub MCP — 미채택 확정.** PR 조회/생성 등 필요한 작업은 이미 인증된 `gh` CLI로 충분(PR #7~#14 감사, PR 생성 모두 `gh`로 처리). CI/CD(`ci.yml`)도 정적 YAML 파일이라 MCP 없이 작성.
+- **Sentry MCP — 미채택 유지, 부록 E(출시 후 30일 KPI, `docs/sprints/ROADMAP.md`) 실행 시점에 재검토.** 현재는 v2.0 미출시라 크래시 데이터 자체가 없어 무의미. 실제 출시 후 "Claude Code가 크래시 데이터를 직접 조회/요약"하는 워크플로우가 필요해지면 그때 도입 검토(secret 관리 부담 대비 실익 재평가).
