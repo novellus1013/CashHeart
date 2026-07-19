@@ -62,3 +62,6 @@ design_handoff_cashheart/
 
 # FVM Version Cache
 .fvm/
+
+# flutter test --coverage output (Sprint 6+, CI generates fresh each run)
+coverage/

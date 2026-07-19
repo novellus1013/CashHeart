@@ -1,0 +1,17 @@
+{
+  "sprint": 6,
+  "baseline": {
+    "captured_at": "2026-07-19",
+    "dart_loc": 10081,
+    "dart_files": 69,
+    "test_files": 23,
+    "coverage_pct": 33.6,
+    "analyze": {
+      "error": 0,
+      "warning": 0,
+      "info": 7
+    },
+    "note": "Sprint 6 착수 시점 snapshot. coverage_pct는 로컬 `flutter test --coverage` 1회 실측(coverage/lcov.info, lines 1238/3684)으로 얻은 값 — Sprint 0 baseline 이후 처음으로 커버리지가 실측됨(그 전엔 tools/metrics/README.md 예고만 있고 미연결 상태였음). test_files는 Sprint 6에서 flutter create 스캐폴드 잔재(widget_test.dart, 상시 실패 카운터 스모크 테스트)를 삭제한 이후 값(24→23)."
+  },
+  "commits": []
+}

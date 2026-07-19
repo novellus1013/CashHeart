@@ -140,7 +140,7 @@ v2.0 작업의 핵심. 모든 sprint는 이 중 1개 이상에 기여해야 한�
 1. `bmad-dev-story`로 story 분해
 2. LLM이 코드 작성 (사람은 watch)
 3. pre-commit hook → `flutter analyze` 차단
-4. `/codex review` adversarial 게이트
+4. `/code-review high` adversarial 게이트 (codex 구독 미보유로 `/codex review`는 실제로 쓰인 적 없음 — Sprint 6에서 문서를 실제 practice로 정정, PR #7~#14 전부 `/code-review high` 사용)
 5. **사용자 검수 게이트** (sprint별로 명시된 시점만 — 톤·데이터·정책·시안)
 6. `feat/sprint-{N}-{topic}` → `dev` PR
 7. hook이 측정 지표를 `tools/metrics/sprint-{N}.json`에 누적
@@ -160,7 +160,7 @@ v2.0 작업의 핵심. 모든 sprint는 이 중 1개 이상에 기여해야 한�
 - Sprint 3 (← 지금 단계, 구현 완료·게이트 대기): 비난조 카피 검수, 균형 시각화 톤 확정
 - Sprint 4: 9 카드 변형 시안 검수 + AI 메시지 A/B 결과 검토
 - Sprint 5: iOS App Store Guideline 2.4.5 본인 검토 + 강제/권장 업데이트 정책 결정
-- Sprint 6: ASO 자산 직접 작성, 출시 후 Sentry 모니터링
+- Sprint 6: ASO 자산 직접 작성(랜딩은 Sprint 2 Phase A에서 이미 완료 — 키워드/아이콘/스크린샷 카피만 남음), 출시 후 30일 Sentry 모니터링(런북은 준비되나 실행은 실제 출시 이후)
 
 ## Design Tone Rules (비협상 — PRFAQ 결정)
 

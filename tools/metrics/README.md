@@ -19,7 +19,7 @@ CashHeart v2.0 "어필 4축" 중 **1번(AI 도입의 수치적 증명)** 의 정
 | dart LOC / 파일 수 / coverage | baseline seed (sprint-0.json) | 품질 |
 
 > Story 1개당 소요 시간은 `bmad-dev-story` 시작/종료 타임스탬프에서 별도 수집(Sprint 1+).
-> 커버리지(lcov) 누적은 테스트 도입 후(Sprint 1+) 파이프라인에 연결.
+> 커버리지(lcov)는 Sprint 6에서 연결됨: `.github/workflows/ci.yml`이 PR마다 `flutter test --coverage`를 실행해 job summary에 표기. `sprint-{N}.json`의 `baseline.coverage_pct`는 sprint 착수 시점 1회 수기 스냅샷(자동 커밋-백 없음) — `flutter test --coverage` 후 `coverage/lcov.info`의 LF/LH 합산으로 산출.
 
 ## 파일
 
