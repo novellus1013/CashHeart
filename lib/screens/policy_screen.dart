@@ -10,8 +10,7 @@ class PolicyScreen extends StatefulWidget {
   static const Map<String, String> _urls = {
     'privacy': 'https://cashheart.novelus.dev/privacy',
     'terms': 'https://cashheart.novelus.dev/terms',
-    // 업데이트 내역 상세 페이지 — 자체 페이지 완성 전까지 임시 placeholder.
-    'update': 'https://www.google.com',
+    'update': 'https://cashheart.novelus.dev/updates',
   };
 
   static const Map<String, String> _titles = {
