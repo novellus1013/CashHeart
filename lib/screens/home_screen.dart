@@ -18,6 +18,7 @@ import 'package:cash_heart/widgets/hero_card.dart';
 import 'package:cash_heart/widgets/pill_nav.dart';
 import 'package:cash_heart/widgets/relationship_row.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 const List<String> _periods = ['1개월', '3개월', '6개월', '1년', '전체'];
@@ -147,6 +148,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        // AppBar(backgroundColor: Colors.transparent)를 쓰면 Flutter가 상태바
+        // 아이콘 밝기를 배경색 밝기로 자동 계산하는 로직이 깨져(투명 = 배경
+        // 없음으로 오판) 라이트 테마에서도 흰색(light) 아이콘이 선택되는 문제가
+        // 실기기에서 확인됐다(2026-07-16, 다른 화면은 불투명 AppBar라 문제 없음).
+        // 테마 밝기로 명시 지정해 실제 배경(colors.bg)과 맞춘다.
+        systemOverlayStyle: Theme.of(context).brightness == Brightness.dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
         centerTitle: false,
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -173,6 +182,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         backgroundColor: Colors.transparent,
         actions: [
+          // "지인 추가"를 floating 버튼으로 리스트 위에 띄우던 방식은 스크롤
+          // 위치와 무관하게 화면 고정 좌표에 떠 있어, 리스트 카드가 그 자리에
+          // 놓이기만 하면(스크롤 여부 상관없이) 항상 겹치는 구조적 문제였다
+          // (2026-07-16 실기기에서 반복 확인 — bottom padding을 더 주는 걸로는
+          // 근본 해결이 안 됨, 스크롤 안 된 초기 화면에서도 두 번째 카드가
+          // 이미 FAB 위치에 걸쳐 있었음). AppBar(고정 영역, 스크롤과 무관)로
+          // 옮겨 겹침 자체가 구조적으로 불가능하게 만든다.
+          if (persons.isNotEmpty)
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => AddEditPersonScreen(),
+                ));
+              },
+              tooltip: '지인 추가',
+              icon: Icon(Icons.person_add_alt_1, color: colors.primary),
+            ),
           if (AppConfig.isDev)
             IconButton(
               onPressed: () {
@@ -187,46 +213,20 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
-      // FAB를 Scaffold의 floatingActionButton 슬롯(Padding으로 감싸는 방식)에
-      // 두면 endFloat 위치 계산이 예상과 다르게 동작해 화면 중간에 떠버리는
-      // 버그가 실기기에서 확인됐다(2026-07-11) — PillNav와 동일하게 Stack +
-      // Positioned로 직접 좌표를 지정해 완전히 예측 가능하게 만든다.
-      body: Stack(
-        children: [
-          persons.isEmpty
-              ? const _EmptyPersonBox()
-              : _HomeBody(
-                  tabs: tabs,
-                  selectedIndex: selectedIndex,
-                  onTabChanged: (index) =>
-                      setState(() => selectedIndex = index),
-                  filteredPersons: filteredPersons,
-                  statsByPerson: personVm.statsByPerson,
-                  personVm: personVm,
-                  periodLabel: _periodLabel(_period),
-                  periodGiven: _periodGiven ?? personVm.totalGiven,
-                  periodReceived: _periodReceived ?? personVm.totalReceived,
-                  onPeriodTap: _onPeriodSheetOpen,
-                ),
-          if (persons.isNotEmpty)
-            Positioned(
-              right: Sizes.size16,
-              bottom: PillNav.bottomClearance(context),
-              child: FloatingActionButton.extended(
-                heroTag: null,
-                backgroundColor: colors.primary,
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => AddEditPersonScreen(),
-                  ));
-                },
-                icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
-                label:
-                    const Text('지인 추가', style: TextStyle(color: Colors.white)),
-              ),
+      body: persons.isEmpty
+          ? const _EmptyPersonBox()
+          : _HomeBody(
+              tabs: tabs,
+              selectedIndex: selectedIndex,
+              onTabChanged: (index) => setState(() => selectedIndex = index),
+              filteredPersons: filteredPersons,
+              statsByPerson: personVm.statsByPerson,
+              personVm: personVm,
+              periodLabel: _periodLabel(_period),
+              periodGiven: _periodGiven ?? personVm.totalGiven,
+              periodReceived: _periodReceived ?? personVm.totalReceived,
+              onPeriodTap: _onPeriodSheetOpen,
             ),
-        ],
-      ),
     );
   }
 }
@@ -362,6 +362,9 @@ class _PersonList extends StatelessWidget {
 
     return ListView.separated(
       // 하단 floating PillNav(MainShellScreen)에 목록이 가리지 않도록 여백 확보.
+      // "지인 추가"는 더 이상 리스트 위에 뜨는 FAB가 아니라 AppBar 액션이라
+      // (2026-07-16, 겹침 문제로 구조 변경) 이 여백 외에 별도로 고려할 floating
+      // 요소가 없다.
       padding: EdgeInsets.only(bottom: PillNav.bottomClearance(context)),
       itemCount: filteredPersons.length,
       separatorBuilder: (context, index) => Gaps.v12,

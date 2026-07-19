@@ -1,14 +1,15 @@
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
-import 'package:cash_heart/screens/main_shell_screen.dart';
 import 'package:cash_heart/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-/// 정적 셸 — v1.1 → v2.0 마이그레이션 완료 안내 레이아웃만.
-/// 실제 마이그레이션 실행/Firebase Remote Config 연동은 Sprint 5 소유.
+/// v1.1 → v2.0 마이그레이션 완료 안내 화면. `MainShellScreen`의 시작
+/// 시퀀스(`_maybeShowOnboarding`)에서 실제 스키마 업그레이드가 감지됐을 때만
+/// 그 위에 push된다 — 그래서 "확인" 액션은 새 셸을 만들지 않고 pop으로
+/// 돌아간다(이미 아래에 셸이 떠 있으므로).
 class MigrationScreen extends StatelessWidget {
   const MigrationScreen({super.key});
 
@@ -129,13 +130,7 @@ class MigrationScreen extends StatelessWidget {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => const MainShellScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: () => Navigator.of(context).pop(),
                     child: const Text('홈으로'),
                   ),
                 ),

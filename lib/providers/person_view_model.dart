@@ -37,6 +37,11 @@ class PersonViewModel extends ChangeNotifier {
   int _totalReceived = 0;
   int get totalReceived => _totalReceived;
 
+  /// 앱 시작 시 마이그레이션 안내 화면(Sprint 5) 노출 여부 판단용.
+  /// DB가 아직 열리지 않았다면 여는 것까지 보장한다.
+  Future<bool> checkMigrationOccurred() =>
+      _repository.ensureOpenedAndCheckMigration();
+
   Future<void> loadPersons() async {
     _isLoading = true;
     notifyListeners();

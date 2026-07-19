@@ -16,6 +16,12 @@ class AppDatabase {
 
   Database? _database;
 
+  // 이번 앱 실행에서 DB가 열리며 스키마 업그레이드가 실제로 일어났는지 여부
+  // (Sprint 5: MigrationScreen 노출 판단에 사용). 신규 설치나 동일 버전
+  // 재실행이면 false로 유지된다.
+  bool _didMigrateOnLastOpen = false;
+  bool get didMigrateOnLastOpen => _didMigrateOnLastOpen;
+
   //처음 _database는 null -> 처음 getter가 호출될 때 _initDatabase() 생성 -> 이후에는 동일한 인스턴스 재사용
   //Appdatabse.instance.database 형태로 사용
   Future<Database> get database async {
@@ -31,7 +37,10 @@ class AppDatabase {
     // ex) `/data/user/.../databases/cash_heart.db`
     final path = join(dpPath, _dbName);
 
-    await maybeBackupBeforeUpgrade(path: path, targetVersion: _dbVersion);
+    _didMigrateOnLastOpen = await maybeBackupBeforeUpgrade(
+      path: path,
+      targetVersion: _dbVersion,
+    );
 
     return await openDatabase(
       path,
@@ -51,23 +60,28 @@ class AppDatabase {
   // 삼키고 null을 반환) — 이 메서드 자체(버전 확인 등 사전 점검)가 실패하는
   // 경우도 동일하게 마이그레이션을 막아선 안 되므로 전체를 try/catch로 감싼다.
   //
+  // 반환값(Sprint 5 추가): 업그레이드가 실제로 일어날 예정이었는지(=백업을
+  // 시도했는지) 여부. 백업 자체의 성공/실패와는 별개 — 백업이 실패해도
+  // 업그레이드 대상이었다는 사실은 true로 보고한다(MigrationScreen 노출 여부는
+  // 백업 성공 여부와 무관해야 하므로).
+  //
   // @visibleForTesting: 실제 디바이스 경로 없이 임시 파일 경로로 테스트에서
   // 동일 로직을 재사용하기 위해 static으로 노출.
   @visibleForTesting
-  static Future<void> maybeBackupBeforeUpgrade({
+  static Future<bool> maybeBackupBeforeUpgrade({
     required String path,
     required int targetVersion,
   }) async {
     Database? readOnlyDb;
     try {
       final exists = await databaseExists(path);
-      if (!exists) return; // 신규 설치: 보존할 기존 데이터 없음
+      if (!exists) return false; // 신규 설치: 보존할 기존 데이터 없음
 
       readOnlyDb = await openReadOnlyDatabase(path);
       final currentVersion = await readOnlyDb.getVersion();
 
       if (currentVersion >= targetVersion) {
-        return; // 업그레이드가 일어나지 않음 (동일 버전이거나 다운그레이드)
+        return false; // 업그레이드가 일어나지 않음 (동일 버전이거나 다운그레이드)
       }
 
       await BackupService.instance.backupBeforeMigration(
@@ -75,9 +89,11 @@ class AppDatabase {
         oldVersion: currentVersion,
         newVersion: targetVersion,
       );
+      return true;
     } catch (e, st) {
       debugPrint('AppDatabase.maybeBackupBeforeUpgrade error: $e');
       await Sentry.captureException(e, stackTrace: st);
+      return false;
     } finally {
       await readOnlyDb?.close();
     }

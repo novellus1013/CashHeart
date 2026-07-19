@@ -9,13 +9,20 @@ import 'package:sqflite/sqflite.dart';
 /// ViewModel/UI를 오직 이 Repository의 메서드만 사용하도록 만들면 차후 DB를 변경해도 ViewModel 코드 수정을 최소화 할 수 있다.
 class PersonRepository {
   //싱글턴인 이유 : 여러개의 인스턴스를 만들 필요 없는 일종의 함수 모음 이기 때문에
-  PersonRepository._internal();
+  PersonRepository._internal() : _testDatabase = null;
   static final PersonRepository instance = PersonRepository._internal();
+
+  /// 테스트 전용 — 실 기기 경로(`AppDatabase.instance`) 대신 주입된 [Database]를 쓴다.
+  /// 프로덕션 코드는 항상 싱글턴 `PersonRepository.instance`를 사용해야 한다.
+  @visibleForTesting
+  PersonRepository.forTesting(Database database) : _testDatabase = database;
+
+  final Database? _testDatabase;
 
   // getter에서 await AppDatabase.instance.database를 안쓰고 Future<Database>를 반환받는 이유
   // 메서드들에서 어차피 Future를 사용하기 때문에
   Future<Database> get _db async {
-    return AppDatabase.instance.database;
+    return _testDatabase ?? AppDatabase.instance.database;
   }
 
   // db.insert는 삽입된 row의 id를 반환
@@ -116,5 +123,12 @@ class PersonRepository {
       await Sentry.captureException(e, stackTrace: st);
       rethrow;
     }
+  }
+
+  /// DB가 열려 있음을 보장하고, 이번 앱 실행에서 그 오픈 과정에 스키마
+  /// 업그레이드가 실제로 일어났는지 반환한다(Sprint 5: MigrationScreen 노출 판단용).
+  Future<bool> ensureOpenedAndCheckMigration() async {
+    await _db;
+    return AppDatabase.instance.didMigrateOnLastOpen;
   }
 }

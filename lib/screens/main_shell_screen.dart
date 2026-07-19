@@ -4,9 +4,11 @@ import 'package:cash_heart/providers/report_view_model.dart';
 import 'package:cash_heart/repositories/gift_repository.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
 import 'package:cash_heart/screens/home_screen.dart';
+import 'package:cash_heart/screens/migration_screen.dart';
 import 'package:cash_heart/screens/onboarding_screen.dart';
 import 'package:cash_heart/screens/report_screen.dart';
 import 'package:cash_heart/screens/setting_screen.dart';
+import 'package:cash_heart/services/update_policy_service.dart';
 import 'package:cash_heart/widgets/pill_nav.dart';
 import 'package:cash_heart/widgets/update_dialog.dart';
 import 'package:flutter/material.dart';
@@ -66,10 +68,21 @@ class _MainShellScreenState extends State<MainShellScreen> {
     _reportVm.loadReportData();
   }
 
-  // 최초 실행(또는 "다음부터 보지 않기" 미체크 상태)이면 온보딩을 먼저 보여주고,
-  // 온보딩이 끝난 뒤에 업데이트 안내를 확인한다(동시에 두 다이얼로그/화면이
-  // 겹치지 않도록 순차 진행).
+  // 시작 시퀀스: 마이그레이션 안내(이번 실행에서 스키마 업그레이드가 실제로
+  // 일어난 경우만) → 온보딩(최초 실행 또는 "다음부터 보지 않기" 미체크) →
+  // 업데이트 안내. 동시에 여러 다이얼로그/화면이 겹치지 않도록 순차 진행한다.
   Future<void> _maybeShowOnboarding() async {
+    final migrated =
+        await context.read<PersonViewModel>().checkMigrationOccurred();
+    if (!mounted) return;
+
+    if (migrated) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MigrationScreen()),
+      );
+      if (!mounted) return;
+    }
+
     final dismissed = await OnboardingScreen.hasDismissed();
     if (!mounted) return;
 
@@ -83,20 +96,34 @@ class _MainShellScreenState extends State<MainShellScreen> {
     await _checkForUpdate();
   }
 
+  // v2.0은 권장(recommended) 다이얼로그만 자동 노출한다(2026-07-13 사용자
+  // 승인). Settings "인앱 업데이트 알림" 토글이 꺼져 있거나, 직전 "나중에"
+  // 클릭으로 이 버전에 대해 아직 스누즈 기간(3일)이 남아있으면 노출하지 않는다.
   Future<void> _checkForUpdate() async {
     final info = await PackageInfo.fromPlatform();
     if (!mounted || info.version == AppVersion.latest) return;
 
+    final policy = UpdatePolicyService.instance;
+    final notificationEnabled = await policy.isNotificationEnabled();
+    if (!mounted || !notificationEnabled) return;
+
+    final snoozed = await policy.isSnoozed(AppVersion.latest);
+    if (!mounted || snoozed) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => UpdateDialog(
+      builder: (dialogContext) => UpdateDialog(
         variant: UpdateDialogVariant.recommended,
         onUpdate: () async {
           await launchUrl(
             Uri.parse(AppVersion.playStoreUrl),
             mode: LaunchMode.externalApplication,
           );
+        },
+        onClose: () {
+          Navigator.of(dialogContext).pop();
+          policy.snooze(AppVersion.latest);
         },
       ),
     );

@@ -1,13 +1,20 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/providers/theme_provider.dart';
 import 'package:cash_heart/screens/onboarding_screen.dart';
 import 'package:cash_heart/screens/policy_screen.dart';
+import 'package:cash_heart/services/csv_data_service.dart';
+import 'package:cash_heart/services/update_policy_service.dart';
 import 'package:cash_heart/theme/app_colors.dart';
 import 'package:cash_heart/widgets/pill_nav.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -18,10 +25,14 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  static const _inAppUpdateNotifKey = 'in_app_update_notification_enabled';
+  // MainShellScreen의 UpdatePolicyService와 동일한 키를 참조해야 이 토글을
+  // 끄는 게 실제로 업데이트 다이얼로그 노출을 막는다(Sprint 5).
+  static const _inAppUpdateNotifKey =
+      UpdatePolicyService.notificationEnabledKey;
 
   String _version = '';
   bool _inAppUpdateNotifEnabled = true;
+  bool _isCsvBusy = false;
 
   @override
   void initState() {
@@ -48,6 +59,44 @@ class _SettingScreenState extends State<SettingScreen> {
     setState(() => _inAppUpdateNotifEnabled = value);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_inAppUpdateNotifKey, value);
+  }
+
+  // 카카오톡 등 일부 메신저는 share_plus의 ACTION_SEND(files+text 동시 전달)에서
+  // CSV(text/csv) mimeType을 이해하지 못해 텍스트 캡션만 받고 파일은 조용히
+  // 버리는 것으로 실기기에서 확인됐다(2026-07-16). 시스템 "저장" 다이얼로그로
+  // 실제 파일을 기기(다운로드/드라이브 등)에 직접 쓰게 하면 앱별 공유 인텐트
+  // 처리 방식과 무관하게 항상 파일이 만들어지고, 이후 원하는 앱에서 "파일 첨부"로
+  // 직접 골라 보낼 수 있다.
+  Future<void> _exportCsv() async {
+    if (_isCsvBusy) return;
+    setState(() => _isCsvBusy = true);
+
+    try {
+      final content = await CsvDataService.instance.exportToCsvString();
+      final bytes = Uint8List.fromList(utf8.encode(content));
+      final savedPath = await FilePicker.saveFile(
+        dialogTitle: 'CSV 저장',
+        fileName: 'cashheart_export_${DateTime.now().millisecondsSinceEpoch}.csv',
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+        bytes: bytes,
+      );
+      if (!mounted || savedPath == null) return; // 사용자가 저장을 취소함
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('CSV 파일을 저장했어요.')),
+      );
+    } catch (e, st) {
+      debugPrint('CSV export error: $e');
+      await Sentry.captureException(e, stackTrace: st);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('CSV 내보내기 중 문제가 생겼어요.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCsvBusy = false);
+    }
   }
 
   @override
@@ -119,12 +168,15 @@ class _SettingScreenState extends State<SettingScreen> {
             _SectionTitle(title: '데이터'),
             _SettingsCard(
               children: [
-                _SettingsDisabledItem(
+                _SettingsItem(
                   icon: Icons.file_upload_outlined,
                   title: 'CSV 내보내기',
-                  subtitle: '곧 추가될 기능이에요',
+                  trailing: _isCsvBusy ? '처리 중…' : null,
+                  onTap: _isCsvBusy ? null : _exportCsv,
                 ),
                 _Divider(),
+                // 가져오기는 다음 스프린트 스코프(2026-07-16 결정) — 서비스
+                // 로직(CsvDataService.importFromFile 등)과 테스트는 보존.
                 _SettingsDisabledItem(
                   icon: Icons.file_download_outlined,
                   title: 'CSV 가져오기',
@@ -274,7 +326,7 @@ class _SettingsItem extends StatelessWidget {
   final String title;
   final String? trailing;
   final bool isChevron;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _SettingsItem({
     required this.icon,
