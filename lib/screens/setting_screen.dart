@@ -1,8 +1,8 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
-import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/providers/theme_provider.dart';
 import 'package:cash_heart/screens/onboarding_screen.dart';
 import 'package:cash_heart/screens/policy_screen.dart';
@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -34,7 +33,6 @@ class _SettingScreenState extends State<SettingScreen> {
   String _version = '';
   bool _inAppUpdateNotifEnabled = true;
   bool _isCsvBusy = false;
-  final _exportButtonKey = GlobalKey();
 
   @override
   void initState() {
@@ -63,26 +61,30 @@ class _SettingScreenState extends State<SettingScreen> {
     await prefs.setBool(_inAppUpdateNotifKey, value);
   }
 
+  // 카카오톡 등 일부 메신저는 share_plus의 ACTION_SEND(files+text 동시 전달)에서
+  // CSV(text/csv) mimeType을 이해하지 못해 텍스트 캡션만 받고 파일은 조용히
+  // 버리는 것으로 실기기에서 확인됐다(2026-07-16). 시스템 "저장" 다이얼로그로
+  // 실제 파일을 기기(다운로드/드라이브 등)에 직접 쓰게 하면 앱별 공유 인텐트
+  // 처리 방식과 무관하게 항상 파일이 만들어지고, 이후 원하는 앱에서 "파일 첨부"로
+  // 직접 골라 보낼 수 있다.
   Future<void> _exportCsv() async {
     if (_isCsvBusy) return;
     setState(() => _isCsvBusy = true);
 
     try {
-      final file = await CsvDataService.instance.exportToFile();
-      if (!mounted) return;
+      final content = await CsvDataService.instance.exportToCsvString();
+      final bytes = Uint8List.fromList(utf8.encode(content));
+      final savedPath = await FilePicker.saveFile(
+        dialogTitle: 'CSV 저장',
+        fileName: 'cashheart_export_${DateTime.now().millisecondsSinceEpoch}.csv',
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+        bytes: bytes,
+      );
+      if (!mounted || savedPath == null) return; // 사용자가 저장을 취소함
 
-      // iPad는 공유 시트가 뜰 위치(sharePositionOrigin)를 지정하지 않으면
-      // 실패할 수 있다(share_plus 공식 문서 명시, Sprint 4에서 이미 확인된 패턴).
-      final buttonBox = _exportButtonKey.currentContext?.findRenderObject()
-          as RenderBox?;
-      await SharePlus.instance.share(
-        ShareParams(
-          text: 'CashHeart 거래 내역 CSV예요',
-          files: [XFile(file.path)],
-          sharePositionOrigin: buttonBox == null
-              ? null
-              : buttonBox.localToGlobal(Offset.zero) & buttonBox.size,
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('CSV 파일을 저장했어요.')),
       );
     } catch (e, st) {
       debugPrint('CSV export error: $e');
@@ -90,49 +92,6 @@ class _SettingScreenState extends State<SettingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('CSV 내보내기 중 문제가 생겼어요.')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isCsvBusy = false);
-    }
-  }
-
-  Future<void> _importCsv() async {
-    if (_isCsvBusy) return;
-
-    final picked = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
-    );
-    final path = picked?.files.single.path;
-    if (path == null) return; // 사용자가 선택을 취소함
-
-    setState(() => _isCsvBusy = true);
-    try {
-      final result = await CsvDataService.instance.importFromFile(File(path));
-      if (!mounted) return;
-
-      // 가져온 거래가 통계/리스트에 즉시 반영되도록 전역 상태를 새로고침한다
-      // (PersonViewModel 변경은 MainShellScreen이 이미 구독해 리포트도 함께 갱신됨).
-      await context.read<PersonViewModel>().loadPersons();
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result.failedRows == 0
-                ? '${result.importedGifts}건을 가져왔어요.'
-                : '${result.importedGifts}건을 가져왔어요. '
-                    '(${result.failedRows}건은 형식이 맞지 않아 건너뛰었어요)',
-          ),
-        ),
-      );
-    } catch (e, st) {
-      debugPrint('CSV import error: $e');
-      await Sentry.captureException(e, stackTrace: st);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('CSV 파일을 읽을 수 없어요. 형식을 확인해주세요.')),
         );
       }
     } finally {
@@ -210,18 +169,18 @@ class _SettingScreenState extends State<SettingScreen> {
             _SettingsCard(
               children: [
                 _SettingsItem(
-                  key: _exportButtonKey,
                   icon: Icons.file_upload_outlined,
                   title: 'CSV 내보내기',
                   trailing: _isCsvBusy ? '처리 중…' : null,
                   onTap: _isCsvBusy ? null : _exportCsv,
                 ),
                 _Divider(),
-                _SettingsItem(
+                // 가져오기는 다음 스프린트 스코프(2026-07-16 결정) — 서비스
+                // 로직(CsvDataService.importFromFile 등)과 테스트는 보존.
+                _SettingsDisabledItem(
                   icon: Icons.file_download_outlined,
                   title: 'CSV 가져오기',
-                  trailing: _isCsvBusy ? '처리 중…' : null,
-                  onTap: _isCsvBusy ? null : _importCsv,
+                  subtitle: '곧 추가될 기능이에요',
                 ),
                 _Divider(),
                 _SettingsDisabledItem(
@@ -370,7 +329,6 @@ class _SettingsItem extends StatelessWidget {
   final VoidCallback? onTap;
 
   const _SettingsItem({
-    super.key,
     required this.icon,
     required this.title,
     this.trailing,

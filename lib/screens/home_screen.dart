@@ -18,6 +18,7 @@ import 'package:cash_heart/widgets/hero_card.dart';
 import 'package:cash_heart/widgets/pill_nav.dart';
 import 'package:cash_heart/widgets/relationship_row.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 const List<String> _periods = ['1개월', '3개월', '6개월', '1년', '전체'];
@@ -147,6 +148,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        // AppBar(backgroundColor: Colors.transparent)를 쓰면 Flutter가 상태바
+        // 아이콘 밝기를 배경색 밝기로 자동 계산하는 로직이 깨져(투명 = 배경
+        // 없음으로 오판) 라이트 테마에서도 흰색(light) 아이콘이 선택되는 문제가
+        // 실기기에서 확인됐다(2026-07-16, 다른 화면은 불투명 AppBar라 문제 없음).
+        // 테마 밝기로 명시 지정해 실제 배경(colors.bg)과 맞춘다.
+        systemOverlayStyle: Theme.of(context).brightness == Brightness.dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
         centerTitle: false,
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -361,8 +370,14 @@ class _PersonList extends StatelessWidget {
     }
 
     return ListView.separated(
-      // 하단 floating PillNav(MainShellScreen)에 목록이 가리지 않도록 여백 확보.
-      padding: EdgeInsets.only(bottom: PillNav.bottomClearance(context)),
+      // 하단 floating PillNav에 목록이 가리지 않도록 여백을 확보하는 것만으론
+      // 부족했다 — "지인 추가" FAB가 PillNav 바로 위(PillNav.bottomClearance
+      // 지점)에 그 자체 높이만큼 추가로 떠 있는데, 리스트는 그 영역까지 스크롤
+      // 콘텐츠를 채워 FAB 밑에 마지막 항목 글자가 가려지는 문제가 실기기에서
+      // 확인됐다(2026-07-16). FAB 높이(size56)+여백(size16)만큼 더 띄운다.
+      padding: EdgeInsets.only(
+        bottom: PillNav.bottomClearance(context) + Sizes.size56 + Sizes.size16,
+      ),
       itemCount: filteredPersons.length,
       separatorBuilder: (context, index) => Gaps.v12,
       itemBuilder: (context, index) {

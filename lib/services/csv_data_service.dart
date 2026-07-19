@@ -8,11 +8,12 @@ import 'package:cash_heart/repositories/person_repository.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 /// 사용자가 Settings "데이터" 섹션에서 직접 트리거하는 CSV 내보내기/가져오기.
+/// **가져오기 UI 진입점은 다음 스프린트 스코프**(2026-07-16 결정, 이번엔
+/// 내보내기만 노출) — [importFromFile]/[importFromCsvString]은 그대로 재사용
+/// 가능하도록 로직·테스트를 보존해뒀다.
 ///
 /// Sprint 1 `BackupService`(마이그레이션 직전 persons/gifts 원본 테이블을 그대로
 /// 덤프하는 내부 안전장치, id 등 DB 내부 컬럼 포함)와는 목적이 다르다 — 이쪽은
@@ -45,7 +46,7 @@ class CsvDataService {
   };
 
   /// 현재 DB의 모든 거래를 CSV 문자열로 직렬화한다(person 이름 조인 포함).
-  @visibleForTesting
+  /// Settings "CSV 내보내기"가 직접 호출하는 공개 API.
   Future<String> exportToCsvString() async {
     final persons = await _personRepository.getAllPersons();
     final personById = {for (final person in persons) person.id: person};
@@ -68,17 +69,10 @@ class CsvDataService {
     return csv.encode(rows);
   }
 
-  /// [exportToCsvString]을 임시 디렉토리에 파일로 저장하고 반환한다.
-  /// 공유(`share_plus`) 트리거는 호출자(Screen) 책임.
-  Future<File> exportToFile() async {
-    final content = await exportToCsvString();
-    final dir = await getTemporaryDirectory();
-    final epochMs = DateTime.now().millisecondsSinceEpoch;
-    final file = File(p.join(dir.path, 'cashheart_export_$epochMs.csv'));
-    return file.writeAsString(content);
-  }
-
   /// CSV 파일을 읽어 [importFromCsvString]으로 위임한다.
+  /// Settings UI에서의 가져오기 진입점은 다음 스프린트 스코프(2026-07-16
+  /// 결정) — 이 메서드와 [importFromCsvString]은 그때 그대로 재사용할 수
+  /// 있도록 로직·테스트를 보존해둔 것이다.
   Future<CsvImportResult> importFromFile(File file) async {
     final content = await file.readAsString();
     return importFromCsvString(content);
