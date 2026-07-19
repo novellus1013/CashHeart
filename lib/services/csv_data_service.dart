@@ -35,7 +35,7 @@ class CsvDataService {
   final PersonRepository _personRepository;
   final GiftRepository _giftRepository;
 
-  static const _headers = ['이름', '인물분류', '금액', '구분', '항목', '날짜', '메모'];
+  static const _headers = ['이름', '인물분류', '금액(원)', '주고받음', '항목', '날짜', '메모'];
   static final _dateFormat = DateFormat('yyyy-MM-dd');
 
   static final _directionByLabel = {
@@ -105,9 +105,9 @@ class CsvDataService {
           continue;
         }
 
-        final direction = _directionByLabel[(row['구분'] as String?)?.trim()];
+        final direction = _directionByLabel[(row['주고받음'] as String?)?.trim()];
         final category = _categoryByLabel[(row['항목'] as String?)?.trim()];
-        final amount = int.tryParse((row['금액'] as String? ?? '').trim());
+        final amount = int.tryParse((row['금액(원)'] as String? ?? '').trim());
         final dateText = (row['날짜'] as String?)?.trim();
 
         if (direction == null || category == null || amount == null || dateText == null) {

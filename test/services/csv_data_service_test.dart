@@ -47,7 +47,7 @@ void main() {
   group('CsvDataService.exportToCsvString', () {
     test('헤더만 있고 거래가 없으면 헤더 행만 반환한다', () async {
       final csvString = await service.exportToCsvString();
-      expect(csvString.trim(), '이름,인물분류,금액,구분,항목,날짜,메모');
+      expect(csvString.trim(), '이름,인물분류,금액(원),주고받음,항목,날짜,메모');
     });
 
     test('person 이름을 조인해 거래 1건당 1행으로 직렬화한다', () async {
@@ -76,7 +76,7 @@ void main() {
 
   group('CsvDataService.importFromCsvString', () {
     test('새 이름은 인물을 새로 만들고 거래를 병합한다', () async {
-      const content = '이름,인물분류,금액,구분,항목,날짜,메모\r\n'
+      const content = '이름,인물분류,금액(원),주고받음,항목,날짜,메모\r\n'
           '이서연,가족,30000,준 돈,생일,2026-03-01,생일 축하\r\n';
 
       final result = await service.importFromCsvString(content);
@@ -101,7 +101,7 @@ void main() {
         Person(name: '박지훈', category: '직장'),
       );
 
-      const content = '이름,인물분류,금액,구분,항목,날짜,메모\r\n'
+      const content = '이름,인물분류,금액(원),주고받음,항목,날짜,메모\r\n'
           '박지훈,직장,100000,받은 돈,결혼,2026-05-05,\r\n';
 
       final result = await service.importFromCsvString(content);
@@ -115,7 +115,7 @@ void main() {
     });
 
     test('손상된 행은 건너뛰고 나머지는 정상적으로 가져온다', () async {
-      const content = '이름,인물분류,금액,구분,항목,날짜,메모\r\n'
+      const content = '이름,인물분류,금액(원),주고받음,항목,날짜,메모\r\n'
           '정상인물,친구,10000,준 돈,생일,2026-02-02,\r\n'
           ',가족,10000,준 돈,생일,2026-02-02,\r\n' // 이름 없음
           '금액깨짐,가족,abc,준 돈,생일,2026-02-02,\r\n' // 금액이 숫자가 아님
