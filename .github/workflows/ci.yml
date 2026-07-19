@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.10"
+          channel: "stable"
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Sprint 0의 로컬 pre-commit 훅(tools/hooks/pre_commit_gate.sh)과 동일 기준:
+      # warning/error 존재 시 실패, info는 통과.
+      - name: flutter analyze (warning/error gate)
+        run: |
+          set -uo pipefail
+          out="$(flutter analyze --no-pub 2>&1 || true)"
+          echo "$out"
+          count="$(printf '%s\n' "$out" | grep -cE '(warning|error) •' || true)"
+          count="${count:-0}"
+          if [ "$count" -gt 0 ]; then
+            echo "::error::flutter analyze warning/error ${count}건 발견 — 게이트 실패"
+            exit 1
+          fi
+
+      - name: flutter test (with coverage)
+        run: flutter test --coverage
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          set -uo pipefail
+          if [ ! -f coverage/lcov.info ]; then
+            echo "coverage/lcov.info 없음 — 요약 skip" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          found=$(awk -F: '/^LF:/{s+=$2} END{print s+0}' coverage/lcov.info)
+          hit=$(awk -F: '/^LH:/{s+=$2} END{print s+0}' coverage/lcov.info)
+          pct="0.0"
+          if [ "${found:-0}" -gt 0 ]; then
+            pct=$(awk -v h="$hit" -v f="$found" 'BEGIN{printf "%.1f", (h/f)*100}')
+          fi
+          {
+            echo "## Coverage"
+            echo "- Lines: ${hit}/${found} (${pct}%)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload lcov report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov-report
+          path: coverage/lcov.info
+          if-no-files-found: ignore
