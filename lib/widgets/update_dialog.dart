@@ -97,9 +97,9 @@ class _RecommendedUpdate extends StatelessWidget {
   const _RecommendedUpdate({required this.onUpdate, this.onClose});
 
   static const _highlights = [
-    '관계의 균형 시각화가 부드러워졌어요',
-    '카드 공유 디자인 3종 추가',
-    '거래 입력 속도 개선',
+    '관계별로 오고 간 정을 균형 시각화로 볼 수 있어요',
+    '경조사 계절 흐름·작년 비교 통계가 추가됐어요',
+    '기록을 CSV로 내보낼 수 있게 됐어요',
   ];
 
   @override
