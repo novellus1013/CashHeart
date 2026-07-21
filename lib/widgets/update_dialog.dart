@@ -97,7 +97,7 @@ class _RecommendedUpdate extends StatelessWidget {
   const _RecommendedUpdate({required this.onUpdate, this.onClose});
 
   static const _highlights = [
-    '관계별로 오고 간 정을 균형 시각화로 볼 수 있어요',
+    '지인별로 주고받은 금액을 그래프로 비교해서 볼 수 있어요',
     '경조사 계절 흐름·작년 비교 통계가 추가됐어요',
     '기록을 CSV로 내보낼 수 있게 됐어요',
   ];
