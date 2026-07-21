@@ -14,20 +14,27 @@ class AppDatabase {
   static const _dbName = 'cash_heart.db';
   static const _dbVersion = 3;
 
-  Database? _database;
-
   // 이번 앱 실행에서 DB가 열리며 스키마 업그레이드가 실제로 일어났는지 여부
   // (Sprint 5: MigrationScreen 노출 판단에 사용). 신규 설치나 동일 버전
   // 재실행이면 false로 유지된다.
   bool _didMigrateOnLastOpen = false;
   bool get didMigrateOnLastOpen => _didMigrateOnLastOpen;
 
-  //처음 _database는 null -> 처음 getter가 호출될 때 _initDatabase() 생성 -> 이후에는 동일한 인스턴스 재사용
+  // 앱 부팅 시 PersonViewModel/ReportViewModel/마이그레이션 체크가 각자
+  // 독립적으로 이 getter를 거의 동시에 호출한다(2026-07-21 발견 — 실기기
+  // 스크린샷 세션에서 매 실행마다 "database_closed" 에러 3회 관찰). 예전엔
+  // `_database = await _initDatabase()` 형태라 await가 끝나기 전까지
+  // `_database`가 계속 null로 보여, 뒤이은 호출자가 각자 또 _initDatabase()를
+  // 불러 sqflite의 path 단일 커넥션을 서로 열고-닫는 경쟁을 일으켰다
+  // (maybeBackupBeforeUpgrade의 openReadOnlyDatabase가 이 커넥션을 공유받아
+  // close()하면서 다른 경쟁자가 이미 닫힌 커넥션에 접근 → 예외). in-flight
+  // Future 자체를 캐싱해 모든 호출자가 동일한 Future를 기다리게 하면 경쟁이
+  // 구조적으로 사라진다.
+  Future<Database>? _databaseFuture;
+
   //Appdatabse.instance.database 형태로 사용
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database!;
+  Future<Database> get database {
+    return _databaseFuture ??= _initDatabase();
   }
 
   Future<Database> _initDatabase() async {
