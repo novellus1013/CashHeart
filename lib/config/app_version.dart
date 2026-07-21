@@ -8,7 +8,7 @@
 /// 실제 트리거 정책은 `UpdatePolicyService`(스누즈)와 `MainShellScreen`
 /// `_checkForUpdate()` 참고.
 class AppVersion {
-  static const String latest = '1.2.0';
+  static const String latest = '2.0.0';
 
   static const String playStoreUrl =
       'https://play.google.com/store/apps/details?id=co.novelus.cashheart';
