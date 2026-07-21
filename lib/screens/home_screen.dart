@@ -382,7 +382,7 @@ class _PersonList extends StatelessWidget {
                   '${stats.count}번의 마음 · ${relativeTimeLabel(stats.lastDate!)}'
               : '기록 없음',
           netAmountText: hasRecords
-              ? MoneyFormatter.formatCurrency(stats.net, 'ko_KR', '₩')
+              ? MoneyFormatter.formatAbbreviated(stats.net)
               : '–',
           netAmountColor: hasRecords
               ? (stats.net >= 0 ? colors.received : colors.given)
