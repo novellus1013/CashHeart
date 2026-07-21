@@ -94,15 +94,16 @@ Repository의 모든 DB 작업은 `try/catch`로 감싸며 `Sentry.captureExcept
 
 # v2.0 작업 컨텍스트
 
-현재 **v2.0.0 큰 기능 확장** 진행 중. PRFAQ + UI 사양 완료. Sprint 0–6으로 분해.
+**v2.0.0 큰 기능 확장, Sprint 0–6 전부 완료 + `main` 머지 완료(2026-07-21).** 버전 `2.0.0+11`. 다음은 **Sprint 7(빌드 + 스토어 제출)** — 상세 스코프는 `docs/sprints/ROADMAP.md` Sprint 7 절 참고, 새 세션에서 이어가도 되도록 그 문서에 전제조건/단계별 체크리스트를 전부 적어뒀다.
 
-**Sprint 상태** (최신은 `docs/sprints/ROADMAP.md` 참고): Sprint 0 완료(dev 머지) → Sprint 1 완료(DB v3 마이그레이션, dev 미머지) → Sprint 2 Phase A+B 완료(설정화면 정비/인프라 하드닝 + 디자인 토큰·핵심 컴포넌트, dev 미머지) → **Sprint 3 구현 완료**(9화면 중 6개 실제 통합, `feat/sprint-3-ui-integration`) — **카피 톤 사용자 게이트만 대기 중**, 통과 전까지 dev 머지 보류.
+**Sprint 상태 요약** (상세는 `docs/sprints/ROADMAP.md` "현재 진행 상태" 표 참고): Sprint 0–3 완료, Sprint 4(카드 공유)는 구현 완료했으나 v2.0 스코프 제외(`FeatureFlags.cardShareEnabled=false`, v2.1+ 이관), Sprint 5(CSV/마이그레이션/업데이트 알림) 완료, Sprint 6(출시 게이트/ASO/CI) 완료. 전부 `main`에 반영됨 — 이제 `main` = 실제 출시 대상 상태.
 
 > ⚠️ 다크모드는 이미 v1.1부터 구현되어 있다(`lib/providers/theme_provider.dart`). Sprint 2는 다크모드 "도입"이 아니라 디자인 토큰 체계 구축이다.
 
 ### 산출물 위치
 
-- **`docs/sprints/ROADMAP.md`** — Sprint 0–6 상세 스코프 + 부록(버그 백로그/개선 의견/위험) **마스터 문서**. repo 안에 존재하지만 gitignore 처리(비공개 작업 문서). 세션 시작 시 이 문서를 최신 상태로 우선 참고.
+- **`docs/sprints/ROADMAP.md`** — Sprint 0–7 상세 스코프 + 부록(버그 백로그/개선 의견/위험) **마스터 문서**. repo 안에 존재하지만 gitignore 처리(비공개 작업 문서). 세션 시작 시 이 문서를 최신 상태로 우선 참고.
+- `docs/aso/` — 확정된 스토어 카피(`store-listing.md`)·아이콘·스크린샷(gitignore, 로컬 전용). Sprint 7(스토어 제출)에서 그대로 사용.
 - `_bmad-output/planning-artifacts/prfaq-CashHeart-distillate.md` — PRFAQ 압축 (gitignore)
 - `_bmad-output/planning-artifacts/ui-prompt-CashHeart-v2.md` — UI 사양 (gitignore)
 - `design_handoff_cashheart/README.md` — Claude Design 9 화면 prototype (gitignore)
