@@ -1,10 +1,16 @@
-import 'dart:math' as math;
-
-import 'package:cash_heart/constants/colors.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
+import 'package:cash_heart/models/relationship_stats.dart';
 import 'package:cash_heart/providers/report_view_model.dart';
+import 'package:cash_heart/theme/app_colors.dart';
+import 'package:cash_heart/theme/balance_state.dart';
+import 'package:cash_heart/utils/balance_copy.dart';
 import 'package:cash_heart/utils/ui_helpers.dart';
+import 'package:cash_heart/widgets/avatar.dart';
+import 'package:cash_heart/widgets/balance_visualization.dart';
+import 'package:cash_heart/widgets/donut_chart.dart';
+import 'package:cash_heart/widgets/pill_nav.dart';
+import 'package:cash_heart/widgets/trend_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -31,39 +37,41 @@ class _ReportScreenState extends State<ReportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          '통계 보기',
-          style: TextStyle(
-            fontSize: Sizes.size18,
-            fontWeight: FontWeight.bold,
-          ),
+          '통계',
+          style: TextStyle(fontSize: Sizes.size18, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new),
-        ),
       ),
       body: vm.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
+              // 하단 floating PillNav(MainShellScreen)에 가리지 않도록 여백 확보.
+              padding: EdgeInsets.only(bottom: PillNav.bottomClearance(context)),
               child: Column(
                 children: [
-                  // Total Given / Total Received Section
-                  _TotalCardsSection(
+                  _NetSummaryCard(
                     totalGiven: vm.totalGiven,
                     totalReceived: vm.totalReceived,
                   ),
-                  // Trend Analysis Section
                   _TrendAnalysisSection(monthlyData: vm.monthlyData),
-                  // Top Categories Section
                   _TopCategoriesSection(
                     categoryData: vm.categoryData,
                     topCategory: vm.topCategory,
                   ),
-                  // Top Gratitude Section
-                  _TopGratitudeSection(topGratitude: vm.topGratitude),
-                  // Top Generosity Section
-                  _TopGenerositySection(topGenerosity: vm.topGenerosity),
+                  _TopInteractionsSection(rows: vm.topInteractions),
+                  _InsightSection(
+                    icon: Icons.favorite_border,
+                    iconColor:
+                        Theme.of(context).extension<AppColors>()!.secondary,
+                    title: '가장 자주 만난 사람',
+                    rows: vm.mostFrequent,
+                    noteOf: (stats) => frequencyNote(stats.count),
+                  ),
+                  _SeasonalitySection(
+                    monthlyTotals: vm.monthlyHistoryTotals,
+                    peakMonths: vm.peakMonths,
+                  ),
+                  _YoyComparisonSection(changePercent: vm.yoyChangePercent),
                   Gaps.v32,
                 ],
               ),
@@ -72,131 +80,120 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 }
 
-// 총액 카드 화면
-class _TotalCardsSection extends StatelessWidget {
+/// 전체 기간 순잔액 통합 카드 — 받은/준 마음을 세로 구분선으로 나란히 보여준다
+/// (2026-07-11 검수: 기존 2개 분리 카드 대신 하나로 통합).
+class _NetSummaryCard extends StatelessWidget {
   final int totalGiven;
   final int totalReceived;
 
-  const _TotalCardsSection({
+  const _NetSummaryCard({
     required this.totalGiven,
     required this.totalReceived,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final net = totalReceived - totalGiven;
+    final netColor = net >= 0 ? colors.received : colors.given;
+
     return Padding(
       padding: const EdgeInsets.all(Sizes.size20),
-      child: Row(
-        children: [
-          Expanded(
-            child: _TotalCard(
-              title: '보낸 금액',
-              amount: totalGiven,
-              icon: Icons.output,
-              color: secondaryColor,
-              borderColor: const Color(0xFFDBEAFE),
-              iconBgColor: const Color(0xFFDBEAFE),
+      child: Container(
+        padding: const EdgeInsets.all(Sizes.size20),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(Sizes.size16),
+          border: Border.all(color: colors.borderSoft),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '전체 기간 순잔액',
+              style: TextStyle(fontSize: Sizes.size14, color: colors.text2),
             ),
-          ),
-          Gaps.h16,
-          Expanded(
-            child: _TotalCard(
-              title: '받은 금액',
-              amount: totalReceived,
-              icon: Icons.input,
-              color: primaryColor,
-              borderColor: const Color(0xFFFEE2E2),
-              iconBgColor: const Color(0xFFFEE2E2),
+            Gaps.v8,
+            Text(
+              MoneyFormatter.formatCurrency(net, 'ko_KR', '₩'),
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+                color: netColor,
+              ),
             ),
-          ),
-        ],
+            Gaps.v20,
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _AmountColumn(
+                      label: '받은 마음',
+                      amount: totalReceived,
+                      color: colors.received,
+                    ),
+                  ),
+                  Container(width: 1, color: colors.borderSoft),
+                  Gaps.h20,
+                  Expanded(
+                    child: _AmountColumn(
+                      label: '준 마음',
+                      amount: totalGiven,
+                      color: colors.given,
+                      alignEnd: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _TotalCard extends StatelessWidget {
-  final String title;
+class _AmountColumn extends StatelessWidget {
+  final String label;
   final int amount;
-  final IconData icon;
   final Color color;
-  final Color borderColor;
-  final Color iconBgColor;
+  final bool alignEnd;
 
-  const _TotalCard({
-    required this.title,
+  const _AmountColumn({
+    required this.label,
     required this.amount,
-    required this.icon,
     required this.color,
-    required this.borderColor,
-    required this.iconBgColor,
+    this.alignEnd = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final formattedAmount =
-        MoneyFormatter.formatCurrency(amount, 'ko_KR', '\u20A9');
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).extension<AppColors>()!;
 
-    return Container(
-      padding: const EdgeInsets.all(Sizes.size20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(Sizes.size16),
-        border: Border.all(
-          color: isDark ? Colors.grey.shade800 : borderColor,
+    return Column(
+      crossAxisAlignment:
+          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: Sizes.size12, color: colors.text2),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            spreadRadius: 0,
+        Gaps.v4,
+        Text(
+          MoneyFormatter.formatCurrency(amount, 'ko_KR', '₩'),
+          style: TextStyle(
+            fontSize: Sizes.size18,
+            fontWeight: FontWeight.bold,
+            color: color,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(Sizes.size6),
-                decoration: BoxDecoration(
-                  color: isDark ? color.withValues(alpha: 0.2) : iconBgColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: Sizes.size20, color: color),
-              ),
-              Gaps.h8,
-              Flexible(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: Sizes.size14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          Gaps.v12,
-          Text(
-            formattedAmount,
-            style: const TextStyle(
-              fontSize: Sizes.size20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-//막대 차트 화면
 class _TrendAnalysisSection extends StatelessWidget {
   final List<MonthlyData> monthlyData;
 
@@ -204,49 +201,62 @@ class _TrendAnalysisSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Sizes.size20),
       child: Container(
         padding: const EdgeInsets.all(Sizes.size24),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(Sizes.size16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              spreadRadius: 0,
-            ),
-          ],
+          border: Border.all(color: colors.borderSoft),
         ),
         child: Column(
           children: [
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   '최근 6개월 거래 내역',
                   style: TextStyle(
                     fontSize: Sizes.size18,
                     fontWeight: FontWeight.bold,
+                    color: colors.text,
                   ),
                 ),
                 Row(
                   children: [
-                    _LegendItem(color: secondaryColor, label: '보냄'),
+                    _LegendItem(color: colors.given, label: '준 마음'),
                     Gaps.h12,
-                    _LegendItem(color: primaryColor, label: '받음'),
+                    _LegendItem(color: colors.received, label: '받은 마음'),
                   ],
                 ),
               ],
             ),
             Gaps.v16,
-            // Bar Chart
-            SizedBox(
-              height: 192,
-              child: _BarChart(monthlyData: monthlyData),
-            ),
+            if (monthlyData.isEmpty)
+              SizedBox(
+                height: 130,
+                child: Center(
+                  child:
+                      Text('데이터가 없습니다', style: TextStyle(color: colors.text3)),
+                ),
+              )
+            else
+              TrendChart(
+                months: monthlyData
+                    .map((m) => TrendChartPoint(
+                          label: m.label,
+                          given: m.given,
+                          received: m.received,
+                        ))
+                    .toList(),
+                receivedColor: colors.received,
+                givenColor: colors.given,
+                gridColor: colors.borderSoft,
+                labelColor: colors.text3,
+              ),
           ],
         ),
       ),
@@ -262,132 +272,23 @@ class _LegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).extension<AppColors>()!;
     return Row(
       children: [
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         Gaps.h4,
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: Sizes.size12,
-            color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
-          ),
-        ),
+        Text(label,
+            style: TextStyle(fontSize: Sizes.size12, color: colors.text3)),
       ],
     );
   }
 }
 
-class _BarChart extends StatelessWidget {
-  final List<MonthlyData> monthlyData;
-
-  const _BarChart({required this.monthlyData});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    if (monthlyData.isEmpty) {
-      return Center(
-        child: Text(
-          '데이터가 없습니다',
-          style: TextStyle(
-            color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
-          ),
-        ),
-      );
-    }
-
-    // 최대값 계산
-    int maxValue = 0;
-    for (final data in monthlyData) {
-      maxValue = math.max(maxValue, math.max(data.given, data.received));
-    }
-    if (maxValue == 0) maxValue = 1;
-
-    return Column(
-      children: [
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: monthlyData.map((data) {
-              final givenHeight = (data.given / maxValue) * 100;
-              final receivedHeight = (data.received / maxValue) * 100;
-
-              return Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        _Bar(
-                          height: givenHeight,
-                          color: secondaryColor,
-                        ),
-                        Gaps.h2,
-                        _Bar(
-                          height: receivedHeight,
-                          color: primaryColor,
-                        ),
-                      ],
-                    ),
-                    Gaps.v8,
-                    Text(
-                      data.label,
-                      style: TextStyle(
-                        fontSize: Sizes.size12,
-                        color: isDark
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        Container(
-          height: 1,
-          color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
-        ),
-      ],
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  final double height;
-  final Color color;
-
-  const _Bar({required this.height, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: 8,
-      height: math.max(height, 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.9),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
-      ),
-    );
-  }
-}
-
-//도넛 차트 화면
+// 도넛 차트 화면
 class _TopCategoriesSection extends StatelessWidget {
   final List<CategoryData> categoryData;
   final String? topCategory;
@@ -399,45 +300,80 @@ class _TopCategoriesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     return Padding(
       padding: const EdgeInsets.all(Sizes.size20),
       child: Container(
         padding: const EdgeInsets.all(Sizes.size24),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(Sizes.size16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              spreadRadius: 0,
-            ),
-          ],
+          border: Border.all(color: colors.borderSoft),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '카테고리별 통계',
+            Text(
+              '경조사 분포',
               style: TextStyle(
                 fontSize: Sizes.size18,
                 fontWeight: FontWeight.bold,
+                color: colors.text,
               ),
             ),
             Gaps.v16,
             Row(
               children: [
-                // Donut Chart
-                _DonutChart(
-                  categoryData: categoryData,
-                  topCategory: topCategory,
+                SizedBox(
+                  width: 128,
+                  height: 128,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      DonutChart(
+                        size: 128,
+                        thickness: 16,
+                        trackColor: colors.borderSoft,
+                        slices: categoryData
+                            .map((d) =>
+                                DonutSlice(value: d.percentage, color: d.color))
+                            .toList(),
+                      ),
+                      Container(
+                        width: 96,
+                        height: 96,
+                        decoration: BoxDecoration(
+                            color: colors.surface, shape: BoxShape.circle),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '최다',
+                              style: TextStyle(
+                                fontSize: Sizes.size12,
+                                color: colors.text3,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              topCategory ?? '-',
+                              style: TextStyle(
+                                fontSize: Sizes.size14,
+                                fontWeight: FontWeight.bold,
+                                color: colors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 Gaps.h32,
-                // Legend
                 Expanded(
                   child: Column(
                     children: categoryData
-                        .take(4)
                         .map((data) => _CategoryLegendItem(data: data))
                         .toList(),
                   ),
@@ -451,109 +387,6 @@ class _TopCategoriesSection extends StatelessWidget {
   }
 }
 
-class _DonutChart extends StatelessWidget {
-  final List<CategoryData> categoryData;
-  final String? topCategory;
-
-  const _DonutChart({
-    required this.categoryData,
-    required this.topCategory,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return SizedBox(
-      width: 128,
-      height: 128,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CustomPaint(
-            size: const Size(128, 128),
-            painter:
-                _DonutChartPainter(categoryData: categoryData, isDark: isDark),
-          ),
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              shape: BoxShape.circle,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '최다',
-                  style: TextStyle(
-                    fontSize: Sizes.size12,
-                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  topCategory ?? '-',
-                  style: const TextStyle(
-                    fontSize: Sizes.size14,
-                    fontWeight: FontWeight.bold,
-                    color: primaryColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DonutChartPainter extends CustomPainter {
-  final List<CategoryData> categoryData;
-  final bool isDark;
-
-  _DonutChartPainter({required this.categoryData, required this.isDark});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    final strokeWidth = 16.0;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    double startAngle = -math.pi / 2;
-
-    if (categoryData.isEmpty) {
-      paint.color = isDark ? Colors.grey.shade700 : Colors.grey.shade200;
-      canvas.drawCircle(center, radius - strokeWidth / 2, paint);
-      return;
-    }
-
-    for (final data in categoryData) {
-      final sweepAngle = (data.percentage / 100) * 2 * math.pi;
-      paint.color = data.color;
-
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius - strokeWidth / 2),
-        startAngle,
-        sweepAngle,
-        false,
-        paint,
-      );
-
-      startAngle += sweepAngle;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
 class _CategoryLegendItem extends StatelessWidget {
   final CategoryData data;
 
@@ -561,7 +394,7 @@ class _CategoryLegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).extension<AppColors>()!;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Sizes.size6),
@@ -570,10 +403,8 @@ class _CategoryLegendItem extends StatelessWidget {
           Container(
             width: 12,
             height: 12,
-            decoration: BoxDecoration(
-              color: data.color,
-              shape: BoxShape.circle,
-            ),
+            decoration:
+                BoxDecoration(color: data.color, shape: BoxShape.circle),
           ),
           Gaps.h8,
           Expanded(
@@ -581,16 +412,17 @@ class _CategoryLegendItem extends StatelessWidget {
               data.category,
               style: TextStyle(
                 fontSize: Sizes.size14,
-                color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                color: colors.text2,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
           Text(
-            '${data.percentage.toStringAsFixed(0)}%',
-            style: const TextStyle(
+            MoneyFormatter.formatWonShort(data.totalAmount),
+            style: TextStyle(
               fontSize: Sizes.size14,
               fontWeight: FontWeight.bold,
+              color: colors.text3,
             ),
           ),
         ],
@@ -599,210 +431,116 @@ class _CategoryLegendItem extends StatelessWidget {
   }
 }
 
-//가장 많이 받은 사람
-class _TopGratitudeSection extends StatelessWidget {
-  final List<PersonBalance> topGratitude;
+/// 오간 마음(준+받은 금액) 총액이 큰 순 top3. 준/받은 금액을 한 행에 함께
+/// 보여줘서 균형 막대가 왜 그렇게 기울어 있는지 바로 확인할 수 있다.
+/// 원래 "가장 많이 준/받은 사람" + "마음이 향한 방향" 3개 섹션으로 나뉘어
+/// 있었으나, 같은 사람이 서로 다른 랭킹에서 다르게(때론 모순처럼) 보여
+/// 혼란스럽다는 피드백(2026-07-11)으로 하나의 목록으로 통합했다.
+class _TopInteractionsSection extends StatelessWidget {
+  final List<PersonRelationshipStats> rows;
 
-  const _TopGratitudeSection({required this.topGratitude});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Sizes.size20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Sizes.size4),
-            child: Row(
-              children: [
-                const Icon(Icons.diversity_1, color: primaryColor, size: 20),
-                Gaps.h8,
-                const Text(
-                  '받은 금액 순위',
-                  style: TextStyle(
-                    fontSize: Sizes.size18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '받은 금액 기준',
-                  style: TextStyle(
-                    fontSize: Sizes.size12,
-                    color: Colors.grey.shade400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Gaps.v12,
-          if (topGratitude.isEmpty)
-            _EmptyCard(message: '데이터가 없습니다')
-          else
-            ...topGratitude.map(
-              (pb) => _PersonBalanceCard(
-                personBalance: pb,
-                isGratitude: true,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// 가장 많이 보낸 사람
-class _TopGenerositySection extends StatelessWidget {
-  final List<PersonBalance> topGenerosity;
-
-  const _TopGenerositySection({required this.topGenerosity});
+  const _TopInteractionsSection({required this.rows});
 
   @override
   Widget build(BuildContext context) {
+    if (rows.isEmpty) return const SizedBox.shrink();
+    final colors = Theme.of(context).extension<AppColors>()!;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
           Sizes.size20, Sizes.size16, Sizes.size20, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Sizes.size4),
-            child: Row(
-              children: [
-                const Icon(Icons.volunteer_activism,
-                    color: secondaryColor, size: 20),
-                Gaps.h8,
-                const Text(
-                  '보낸 금액 순위',
-                  style: TextStyle(
-                    fontSize: Sizes.size18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '보낸 금액 기준',
-                  style: TextStyle(
-                    fontSize: Sizes.size12,
-                    color: Colors.grey.shade400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Gaps.v12,
-          if (topGenerosity.isEmpty)
-            _EmptyCard(message: '데이터가 없습니다')
-          else
-            ...topGenerosity.map(
-              (pb) => _PersonBalanceCard(
-                personBalance: pb,
-                isGratitude: false,
+      child: Container(
+        padding: const EdgeInsets.all(Sizes.size20),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(Sizes.size16),
+          border: Border.all(color: colors.borderSoft),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '많이 오간 마음',
+              style: TextStyle(
+                fontSize: Sizes.size18,
+                fontWeight: FontWeight.bold,
+                color: colors.text,
               ),
             ),
-        ],
+            Gaps.v16,
+            for (final row in rows) ...[
+              _InteractionRow(entry: row),
+              Gaps.v10,
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _PersonBalanceCard extends StatelessWidget {
-  final PersonBalance personBalance;
-  final bool isGratitude;
+class _InteractionRow extends StatelessWidget {
+  final PersonRelationshipStats entry;
 
-  const _PersonBalanceCard({
-    required this.personBalance,
-    required this.isGratitude,
-  });
+  const _InteractionRow({required this.entry});
 
   @override
   Widget build(BuildContext context) {
-    final person = personBalance.person;
-    final netBalance = personBalance.netBalance;
-    final color = isGratitude ? primaryColor : secondaryColor;
-    final initials = _getInitials(person.category ?? person.name);
-    final formattedBalance = MoneyFormatter.formatCurrency(
-      netBalance.abs(),
-      'ko_KR',
-      isGratitude ? '+\u20A9' : '-\u20A9',
-    );
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final stats = entry.stats;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: Sizes.size12),
-      padding: const EdgeInsets.all(Sizes.size16),
+      padding: const EdgeInsets.all(Sizes.size14),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(Sizes.size12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            spreadRadius: 0,
-          ),
-        ],
+        border: Border.all(color: colors.borderSoft),
       ),
       child: Row(
         children: [
-          // Avatar
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? color.withValues(alpha: 0.2)
-                  : (isGratitude
-                      ? const Color(0xFFDBEAFE)
-                      : const Color(0xFFFEE2E2)),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                initials,
-                style: TextStyle(
-                  fontSize: Sizes.size14,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ),
-          ),
+          Avatar(
+              name: entry.person.name,
+              tintSeed: entry.person.id ?? 0,
+              size: 36),
           Gaps.h12,
-          // Name and Category
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  person.name,
-                  style: const TextStyle(
+                  entry.person.name,
+                  style: TextStyle(
                     fontSize: Sizes.size14,
                     fontWeight: FontWeight.bold,
+                    color: colors.text,
                   ),
                 ),
-                if (person.note != null)
-                  Text(
-                    person.note!,
-                    style: TextStyle(
-                      fontSize: Sizes.size12,
-                      color:
-                          isDark ? Colors.grey.shade400 : Colors.grey.shade500,
-                    ),
-                  ),
+                Gaps.v4,
+                SizedBox(
+                  width: 80,
+                  child: BalanceVisualization(tilt: stats.tilt, compact: true),
+                ),
               ],
             ),
           ),
-          // Balance
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                formattedBalance,
+                '받은 ${MoneyFormatter.formatWonShort(stats.received)}',
                 style: TextStyle(
-                  fontSize: Sizes.size14,
-                  fontWeight: FontWeight.bold,
-                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: colors.received,
+                ),
+              ),
+              Gaps.v2,
+              Text(
+                '준 ${MoneyFormatter.formatWonShort(stats.given)}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: colors.given,
                 ),
               ),
             ],
@@ -811,50 +549,264 @@ class _PersonBalanceCard extends StatelessWidget {
       ),
     );
   }
-
-  String _getInitials(String name) {
-    final parts = name.split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    } else if (name.length >= 2) {
-      return name.substring(0, 2).toUpperCase();
-    }
-    return name.isNotEmpty ? name[0].toUpperCase() : '';
-  }
 }
 
-class _EmptyCard extends StatelessWidget {
-  final String message;
+/// 월별(연도 무관) 누적 총액 막대 + 피크 시즌 문구(2026-07-11 추가).
+class _SeasonalitySection extends StatelessWidget {
+  final List<int> monthlyTotals;
+  final List<int> peakMonths;
 
-  const _EmptyCard({required this.message});
+  const _SeasonalitySection({
+    required this.monthlyTotals,
+    required this.peakMonths,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!monthlyTotals.any((v) => v > 0)) return const SizedBox.shrink();
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final note = peakSeasonNote(peakMonths);
+    final maxV = monthlyTotals.fold<int>(0, (a, b) => a > b ? a : b);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(Sizes.size24),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(Sizes.size12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          message,
-          style: TextStyle(
-            fontSize: Sizes.size14,
-            color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
-          ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          Sizes.size20, Sizes.size16, Sizes.size20, 0),
+      child: Container(
+        padding: const EdgeInsets.all(Sizes.size20),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(Sizes.size16),
+          border: Border.all(color: colors.borderSoft),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '경조사가 몰리는 시기',
+              style: TextStyle(
+                fontSize: Sizes.size18,
+                fontWeight: FontWeight.bold,
+                color: colors.text,
+              ),
+            ),
+            Gaps.v4,
+            Text(
+              '지금까지 기록된 모든 내역을 월별로 합산한 기준이에요.',
+              style: TextStyle(fontSize: 12, color: colors.text3),
+            ),
+            if (note != null) ...[
+              Gaps.v6,
+              Text(note, style: TextStyle(fontSize: 13, color: colors.text2)),
+            ],
+            Gaps.v16,
+            SizedBox(
+              height: 72,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  for (var i = 0; i < 12; i++) ...[
+                    Expanded(
+                      child: Container(
+                        height: maxV == 0
+                            ? 4.0
+                            : (monthlyTotals[i] / maxV) * 64 + 4,
+                        decoration: BoxDecoration(
+                          color: peakMonths.contains(i + 1)
+                              ? colors.secondary
+                              : colors.borderSoft,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                    if (i != 11) Gaps.h2,
+                  ],
+                ],
+              ),
+            ),
+            Gaps.v6,
+            Row(
+              children: [
+                for (var m = 1; m <= 12; m++)
+                  Expanded(
+                    child: Center(
+                      child: Text('$m',
+                          style: TextStyle(fontSize: 9, color: colors.text3)),
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+/// 올해 누적 vs 작년 동기간 비교(2026-07-11 추가).
+class _YoyComparisonSection extends StatelessWidget {
+  final double? changePercent;
+
+  const _YoyComparisonSection({required this.changePercent});
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = changePercent;
+    if (percent == null) return const SizedBox.shrink();
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          Sizes.size20, Sizes.size16, Sizes.size20, 0),
+      child: Container(
+        padding: const EdgeInsets.all(Sizes.size20),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(Sizes.size16),
+          border: Border.all(color: colors.borderSoft),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_month_outlined,
+                color: colors.secondary, size: 22),
+            Gaps.h12,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '작년과 비교하면',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: colors.text3),
+                  ),
+                  Gaps.v4,
+                  Text(
+                    yoyNote(percent),
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colors.text),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// design_handoff `InsightGroup` 이식 — person별 인사이트 리스트 공용 렌더러.
+class _InsightSection extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final List<PersonRelationshipStats> rows;
+  final String Function(RelationshipStats stats) noteOf;
+
+  const _InsightSection({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.rows,
+    required this.noteOf,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (rows.isEmpty) return const SizedBox.shrink();
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          Sizes.size20, Sizes.size16, Sizes.size20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: iconColor, size: 20),
+              Gaps.h8,
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: Sizes.size18,
+                  fontWeight: FontWeight.bold,
+                  color: colors.text,
+                ),
+              ),
+            ],
+          ),
+          Gaps.v12,
+          for (final row in rows) ...[
+            _InsightRow(entry: row, note: noteOf(row.stats)),
+            Gaps.v10,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InsightRow extends StatelessWidget {
+  final PersonRelationshipStats entry;
+  final String note;
+
+  const _InsightRow({required this.entry, required this.note});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final state = entry.stats.state;
+
+    return Container(
+      padding: const EdgeInsets.all(Sizes.size14),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(Sizes.size12),
+        border: Border.all(color: colors.borderSoft),
+      ),
+      child: Row(
+        children: [
+          Avatar(
+              name: entry.person.name,
+              tintSeed: entry.person.id ?? 0,
+              size: 36),
+          Gaps.h12,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.person.name,
+                  style: TextStyle(
+                    fontSize: Sizes.size14,
+                    fontWeight: FontWeight.bold,
+                    color: colors.text,
+                  ),
+                ),
+                Gaps.v4,
+                SizedBox(
+                  width: 80,
+                  child: BalanceVisualization(
+                      tilt: entry.stats.tilt, compact: true),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            note,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: state.color(colors),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

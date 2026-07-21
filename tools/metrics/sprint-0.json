@@ -1,0 +1,44 @@
+{
+  "sprint": 0,
+  "baseline": {
+    "captured_at": "2026-07-08",
+    "dart_loc": 4905,
+    "dart_files": 28,
+    "test_files": 1,
+    "coverage_pct": 0,
+    "analyze": {
+      "error": 0,
+      "warning": 1,
+      "info": 3
+    },
+    "note": "v2.0 착수 시점 baseline. warning 1건(_focusedDay unused_field)은 Sprint 0에서 제거하여 게이트 green 확보. 이후 commits[]에 커밋 단위 지표 append."
+  },
+  "commits": [
+    {
+      "hash": "4a30fda5b0c6",
+      "timestamp": "2026-07-08T16:01:38+09:00",
+      "files_changed": 15,
+      "loc_added": 664,
+      "loc_deleted": 4,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 3
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "a663a8c1d765",
+      "timestamp": "2026-07-08T16:06:06+09:00",
+      "files_changed": 1,
+      "loc_added": 15,
+      "loc_deleted": 1,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 3
+      },
+      "llm_authored": true
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "sprint": 4,
+  "commits": [
+    {
+      "hash": "91531d9fc618",
+      "timestamp": "2026-07-13T10:20:37+09:00",
+      "files_changed": 37,
+      "loc_added": 1462,
+      "loc_deleted": 227,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "1ed4389ab388",
+      "timestamp": "2026-07-13T10:20:53+09:00",
+      "files_changed": 1,
+      "loc_added": 18,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "d58cf06e113d",
+      "timestamp": "2026-07-13T10:21:14+09:00",
+      "files_changed": 1,
+      "loc_added": 13,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "affcb16a9c57",
+      "timestamp": "2026-07-13T12:04:04+09:00",
+      "files_changed": 6,
+      "loc_added": 100,
+      "loc_deleted": 35,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "fee5a5465159",
+      "timestamp": "2026-07-13T12:04:17+09:00",
+      "files_changed": 1,
+      "loc_added": 26,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "29d83bb7122a",
+      "timestamp": "2026-07-13T12:04:31+09:00",
+      "files_changed": 1,
+      "loc_added": 13,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    }
+  ]
+}

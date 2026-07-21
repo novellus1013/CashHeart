@@ -1,17 +1,29 @@
-import 'package:cash_heart/constants/colors.dart';
+import 'package:cash_heart/config/feature_flags.dart';
 import 'package:cash_heart/constants/gaps.dart';
 import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/models/gift.dart';
 import 'package:cash_heart/models/gift_types.dart';
+import 'package:cash_heart/models/relationship_stats.dart';
 import 'package:cash_heart/providers/gift_view_model.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/screens/add_edit_gift_screen.dart';
 import 'package:cash_heart/screens/add_edit_person_screen.dart';
-import 'package:cash_heart/utils/ui_helpers.dart';
-import 'package:cash_heart/widgets/total_card.dart';
+import 'package:cash_heart/screens/card_share_screen.dart';
+import 'package:cash_heart/theme/app_colors.dart';
+import 'package:cash_heart/theme/app_text_styles.dart';
+import 'package:cash_heart/theme/balance_state.dart';
+import 'package:cash_heart/utils/balance_copy.dart';
+import 'package:cash_heart/utils/share_card_case.dart';
+import 'package:cash_heart/widgets/app_bottom_sheet.dart';
+import 'package:cash_heart/widgets/category_bars.dart';
+import 'package:cash_heart/widgets/confirm_dialog.dart';
+import 'package:cash_heart/widgets/hero_card.dart';
+import 'package:cash_heart/widgets/icon_badge.dart';
+import 'package:cash_heart/widgets/legend.dart';
+import 'package:cash_heart/widgets/section_title.dart';
+import 'package:cash_heart/widgets/stream_chart.dart';
+import 'package:cash_heart/widgets/txn_row.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class PersonDetailScreen extends StatefulWidget {
@@ -24,288 +36,435 @@ class PersonDetailScreen extends StatefulWidget {
 }
 
 class _PersonDetailScreenState extends State<PersonDetailScreen> {
-  int selectedIndex = 0;
-
   Future<void> _onDeletePerson(
       BuildContext context, PersonViewModel personVm) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          '정말 삭제하시겠습니까?',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: Sizes.size20,
-          ),
-        ),
-        content: Text(
-          '이 사람과 관련된 모든 거래 내역이 함께 삭제됩니다. 한 번 삭제하면 돌이킬 수 없습니다.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.grey.shade600,
-            ),
-            child: Text(
-              '취소',
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-            ),
-            child: Text(
-              '삭제하기',
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
+    final shouldDelete = await showConfirmDialog(
+      context,
+      title: '정말 삭제하시겠습니까?',
+      message: '이 사람과 관련된 모든 거래 내역이 함께 삭제됩니다. 한 번 삭제하면 돌이킬 수 없습니다.',
+      confirmLabel: '삭제하기',
     );
 
-    if (shouldDelete == true) {
+    if (shouldDelete) {
       await personVm.deletePerson(widget.personId);
       if (!mounted) return;
       Navigator.of(context).pop();
     }
   }
 
+  void _onCardShare(
+    BuildContext context,
+    String personName,
+    RelationshipStats stats,
+    ShareCardCase caseType,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CardShareScreen(
+          personName: personName,
+          stats: stats,
+          caseType: caseType,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onMore(
+    BuildContext context,
+    PersonViewModel personVm,
+    String personName,
+  ) async {
+    await showAppBottomSheet(
+      context,
+      title: personName,
+      builder: (sheetContext) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('정보 수정'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        AddEditPersonScreen(personId: widget.personId),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).extension<AppColors>()!.primary,
+              ),
+              title: Text(
+                '삭제',
+                style: TextStyle(
+                  color: Theme.of(context).extension<AppColors>()!.primary,
+                ),
+              ),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _onDeletePerson(context, personVm);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final personVm = context.watch<PersonViewModel>();
     final giftVm = context.watch<GiftViewModel>();
+    final colors = Theme.of(context).extension<AppColors>()!;
 
     final person = personVm.getPersonById(widget.personId);
 
     // 삭제 후 rebuild 시 person이 null일 수 있음
     if (person == null) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (giftVm.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final personName = person.name;
-
-    final allGifts = giftVm.gifts;
-    final givenGifts = giftVm.giftGivenList;
-    final receivedGifts = giftVm.giftReceivedList;
-    final isPlus = giftVm.totalAmountById > 0 ? true : false;
-
-    final totalAmountFormat =
-        MoneyFormatter.formatCurrency(giftVm.totalAmountById, 'ko_KR', '₩ ');
-    final totalReceivedFormat =
-        MoneyFormatter.formatCurrency(giftVm.totalReceivedById, 'ko_KR', '₩ ');
-    final totalGivenFormat =
-        MoneyFormatter.formatCurrency(giftVm.totalGivenById, 'ko_KR', '₩ ');
-
-    final List<String> tabs = ["총액", "받은 돈", "준 돈"];
-
-    // 현재 탭에 따라 표시할 리스트 선택
-    List<Gift> filteredList;
-    if (selectedIndex == 0) {
-      filteredList = allGifts;
-    } else if (selectedIndex == 1) {
-      filteredList = receivedGifts;
-    } else {
-      filteredList = givenGifts;
-    }
-
-    //list를 복사하여 날짜 내리차순으로 정리
-    final sortedList = [...filteredList]
+    final stats = giftVm.stats;
+    final sortedGifts = [...giftVm.gifts]
       ..sort((a, b) => b.date.compareTo(a.date));
 
-    //로딩 중
-    if (giftVm.isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+    final byCategory = GiftCategory.values
+        .map((category) {
+          final catGifts =
+              giftVm.gifts.where((g) => g.category == category);
+          return CategoryBarData(
+            label: category.label,
+            icon: category.iconOutlined,
+            received: catGifts
+                .where((g) => g.direction == GiftDirection.received)
+                .fold(0, (a, g) => a + g.amount),
+            given: catGifts
+                .where((g) => g.direction == GiftDirection.given)
+                .fold(0, (a, g) => a + g.amount),
+          );
+        })
+        .where((c) => c.received + c.given > 0)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
-        title: Text(
-          personName,
-        ),
+        title: Text(personName),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => AddEditPersonScreen(
-                    personId: widget.personId,
-                  ),
-                ),
-              );
-            },
-            icon: Icon(
-              Icons.edit,
-              color: secondaryColor,
+          if (FeatureFlags.cardShareEnabled &&
+              giftVm.shareCardCase != ShareCardCase.none)
+            IconButton(
+              onPressed: () => _onCardShare(
+                context,
+                personName,
+                stats,
+                giftVm.shareCardCase,
+              ),
+              icon: const Icon(Icons.ios_share_outlined),
+              tooltip: '카드 공유',
             ),
-            tooltip: '수정하기',
-          ),
           IconButton(
-            onPressed: () => _onDeletePerson(context, personVm),
-            icon: Icon(
-              Icons.delete,
-              color: primaryColor,
-            ),
-            tooltip: '삭제하기',
+            onPressed: () => _onMore(context, personVm, personName),
+            icon: const Icon(Icons.more_horiz),
+            tooltip: '더보기',
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        // FAB의 Hero 위젯 충돌 오류 방지
-        heroTag: null,
-        backgroundColor: primaryColor,
-        shape: CircleBorder(),
-        tooltip: 'Add Transaction',
-        onPressed: () {
-          final giftVm = context.read<GiftViewModel>();
-
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ChangeNotifierProvider.value(
-                value: giftVm,
-                child: AddEditGiftScreen(
-                  personId: widget.personId,
-                  personName: personName,
-                ),
+      floatingActionButton: stats.count > 0
+          ? FloatingActionButton.extended(
+              heroTag: null,
+              backgroundColor: colors.primary,
+              onPressed: () {
+                final giftVm = context.read<GiftViewModel>();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChangeNotifierProvider.value(
+                      value: giftVm,
+                      child: AddEditGiftScreen(
+                        personId: widget.personId,
+                        personName: personName,
+                      ),
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.playlist_add, color: Colors.white),
+              label: const Text('내역 추가', style: TextStyle(color: Colors.white)),
+            )
+          : null,
+      body: ListView(
+        padding: EdgeInsets.fromLTRB(
+          Sizes.size20,
+          Sizes.size10,
+          Sizes.size20,
+          Sizes.size96 + Sizes.size24,
+        ),
+        children: [
+          HeroCard(
+            label: '오고 간 정(情) · 순잔액',
+            netAmount: stats.net,
+            givenAmount: stats.given,
+            receivedAmount: stats.received,
+            amountStyle: AppTextStyles.detailAmount,
+            statePill: stats.count > 0
+                ? Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Sizes.size11,
+                      vertical: Sizes.size6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: stats.state.softColor(colors),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      balanceStateLabel(stats.state),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: stats.state.color(colors),
+                      ),
+                    ),
+                  )
+                : null,
+            extra: stats.count >= 2 ? StreamChart(gifts: giftVm.gifts) : null,
+            quoteMessage:
+                balanceToneMessage(count: stats.count, state: stats.state),
+          ),
+          Gaps.v14,
+          _MemoCard(note: person.note, personId: widget.personId),
+          if (byCategory.isNotEmpty) ...[
+            Gaps.v14,
+            Container(
+              padding: EdgeInsets.all(Sizes.size18),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: colors.borderSoft),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionTitle('경조사별 오고 간 마음'),
+                  Gaps.v14,
+                  CategoryBars(byCategory: byCategory),
+                  const Legend(),
+                ],
               ),
             ),
-          );
-        },
-        child: Icon(
-          Icons.playlist_add,
-          size: 32.0,
-          color: Colors.white,
-        ),
-      ),
-      body: Padding(
-        padding: EdgeInsetsGeometry.symmetric(
-          horizontal: Sizes.size20,
-        ),
-        child: Center(
-          child: Column(
+          ],
+          Gaps.v14,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Gaps.v10,
-              TotalCard(
-                  isPlus: isPlus,
-                  totalAmountFormat: totalAmountFormat,
-                  totalReceivedFormat: totalReceivedFormat,
-                  totalGivenFormat: totalGivenFormat),
-              Gaps.v20,
-
-              // 탭 필터
-              Builder(
-                builder: (context) {
-                  final isDark = Theme.of(context).brightness == Brightness.dark;
-                  return Container(
-                    padding: EdgeInsets.all(Sizes.size4),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(Sizes.size20),
-                    ),
-                    child: Row(
-                      children: List.generate(tabs.length, (index) {
-                        final isSelected = selectedIndex == index;
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedIndex = index;
-                              });
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(vertical: Sizes.size10),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? Theme.of(context).cardColor
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(Sizes.size16),
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color:
-                                              Colors.black.withValues(alpha: 0.05),
-                                          blurRadius: 5,
-                                          spreadRadius: 1,
-                                        )
-                                      ]
-                                    : null,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                tabs[index],
-                                style: TextStyle(
-                                  fontSize: Sizes.size14,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  color: isSelected
-                                      ? (isDark ? Colors.white : Colors.black)
-                                      : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  );
-                },
-              ),
-              Gaps.v8,
+              const SectionTitle('거래 내역'),
               Text(
-                '내역을 오른쪽으로 당기면 수정이나 삭제가 가능해요!',
-                style: TextStyle(
-                  fontSize: Sizes.size12,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey.shade400
-                      : Colors.grey.shade600,
-                ),
+                '${stats.count}건',
+                style: TextStyle(fontSize: 13, color: colors.text3),
               ),
-              Gaps.v10,
-
-              //무한 스크롤 리스트
-              _DetailList(filteredList: sortedList),
             ],
           ),
-        ),
+          Gaps.v10,
+          if (stats.count == 0) _EmptyDetail(personId: widget.personId, personName: personName),
+          if (stats.count == 1) ...[
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: Sizes.size14,
+                vertical: Sizes.size10,
+              ),
+              decoration: BoxDecoration(
+                color: colors.secondarySoft,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome, size: 17, color: colors.secondary),
+                  Gaps.h8,
+                  Expanded(
+                    child: Text(
+                      '더 많은 기록이 쌓이면 관계의 흐름이 보여요.',
+                      style: TextStyle(fontSize: 13, color: colors.secondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Gaps.v10,
+          ],
+          for (final gift in sortedGifts) ...[
+            _TxnRowWithMenu(gift: gift, personName: personName),
+            Gaps.v8,
+          ],
+        ],
       ),
     );
   }
 }
 
-class _DetailList extends StatelessWidget {
-  final List<Gift> filteredList;
+class _MemoCard extends StatelessWidget {
+  final String? note;
+  final int personId;
 
-  const _DetailList({
-    required this.filteredList,
-  });
+  const _MemoCard({required this.note, required this.personId});
 
-  void _onEditGift(BuildContext context, Gift gift) {
+  void _onEdit(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddEditPersonScreen(personId: personId),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+    final hasNote = note != null && note!.isNotEmpty;
+
+    // 메모가 없어도(첫거래 추가 등으로) 언제든 여기서 새로 추가할 수 있어야 한다 —
+    // note가 비었다고 카드 자체를 숨기면 메모를 추가할 방법이 사라지는 버그였다.
+    if (!hasNote) {
+      return GestureDetector(
+        onTap: () => _onEdit(context),
+        child: Container(
+          padding: EdgeInsets.all(Sizes.size16),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: colors.border, style: BorderStyle.solid),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.add, size: 18, color: colors.text3),
+              Gaps.h9,
+              Text(
+                '메모 추가',
+                style: TextStyle(fontSize: 14, color: colors.text3),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.all(Sizes.size16),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.borderSoft),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.format_quote, size: 18, color: colors.text3),
+          Gaps.h9,
+          Expanded(
+            child: Text(
+              note!,
+              style: TextStyle(fontSize: 14, color: colors.text, height: 1.5),
+            ),
+          ),
+          IconButton(
+            onPressed: () => _onEdit(context),
+            icon: Icon(Icons.edit, size: 17, color: colors.text3),
+            tooltip: '메모 편집',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyDetail extends StatelessWidget {
+  final int personId;
+  final String personName;
+
+  const _EmptyDetail({required this.personId, required this.personName});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppColors>()!;
+
+    return Container(
+      padding: EdgeInsets.all(Sizes.size28),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.borderSoft),
+      ),
+      child: Column(
+        children: [
+          IconBadge(
+            icon: Icons.volunteer_activism,
+            color: colors.text3,
+            soft: colors.bg,
+            size: 56,
+            iconSize: 28,
+          ),
+          Gaps.v14,
+          Text(
+            '아직 오고 간 기록이 없어요',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: colors.text,
+            ),
+          ),
+          Gaps.v4,
+          Text(
+            '첫 마음을 기록하면\n관계의 흐름이 쌓이기 시작해요.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: colors.text2, height: 1.5),
+          ),
+          Gaps.v16,
+          ElevatedButton.icon(
+            onPressed: () {
+              final giftVm = context.read<GiftViewModel>();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ChangeNotifierProvider.value(
+                    value: giftVm,
+                    child: AddEditGiftScreen(
+                      personId: personId,
+                      personName: personName,
+                    ),
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('첫 거래 추가'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TxnRowWithMenu extends StatelessWidget {
+  final Gift gift;
+  final String personName;
+
+  const _TxnRowWithMenu({required this.gift, required this.personName});
+
+  void _onEdit(BuildContext context) {
     final giftVm = context.read<GiftViewModel>();
-    final person = context.read<PersonViewModel>().getPersonById(gift.personId);
-    if (person == null) return;
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider.value(
           value: giftVm,
           child: AddEditGiftScreen(
-            personName: person.name,
+            personName: personName,
             personId: gift.personId,
             giftId: gift.id,
           ),
@@ -314,179 +473,63 @@ class _DetailList extends StatelessWidget {
     );
   }
 
-  Future<bool?> _onWarningDelteGift(BuildContext context, Gift gift) async {
-    final giftVm = context.read<GiftViewModel>();
-
-    return await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
+  Future<void> _onMore(BuildContext context) async {
+    await showAppBottomSheet(
+      context,
+      builder: (sheetContext) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('수정하기'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _onEdit(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).extension<AppColors>()!.primary,
+              ),
               title: Text(
-                '정말 삭제하시겠습니까?',
+                '삭제하기',
                 style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: Sizes.size20,
+                  color: Theme.of(context).extension<AppColors>()!.primary,
                 ),
               ),
-              content: Text(
-                '한 번 삭제하면 돌이킬 수 없습니다.',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.grey.shade600,
-                  ),
-                  child: Text(
-                    '취소',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    giftVm.deleteGift(gift.id!);
-                    Navigator.pop(context, false);
-                  },
-                  child: Text(
-                    '삭제하기',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ));
+              onTap: () async {
+                Navigator.of(sheetContext).pop();
+                final shouldDelete = await showConfirmDialog(
+                  context,
+                  title: '정말 삭제하시겠습니까?',
+                  message: '한 번 삭제하면 돌이킬 수 없습니다.',
+                  confirmLabel: '삭제하기',
+                );
+                if (shouldDelete && context.mounted) {
+                  await context.read<GiftViewModel>().deleteGift(gift.id!);
+                  // 2026-07-11 검수: 이 경로가 personVm.refreshTotals()를 호출하지
+                  // 않아 Home 상단 카드가 갱신 안 되던 버그(add_edit_gift_screen의
+                  // 저장 경로에만 refreshTotals가 있었음).
+                  if (context.mounted) {
+                    await context.read<PersonViewModel>().refreshTotals();
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Expanded(
-      child: ListView.separated(
-        //최하단의 list_item이 floating_action_bar에 가리지 않도록 패딩 추가
-        padding: EdgeInsets.only(bottom: Sizes.size56 + Sizes.size52),
-        itemCount: filteredList.length, // 무한 스크롤 시뮬레이션 (데이터 반복)
-        separatorBuilder: (context, index) => Gaps.v12,
-        itemBuilder: (context, index) {
-          final data = filteredList[index];
-
-          final isReceived = data.direction == GiftDirection.received;
-          final meta = giftCategoryMeta[data.category];
-          final dateText = DateFormat('yyyy년 MM월 dd일')
-              .format(DateTime.fromMillisecondsSinceEpoch(data.date));
-          final oneGiftAmount =
-              MoneyFormatter.formatCurrency(data.amount, 'ko_KR', '₩');
-
-          return ClipRRect(
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(Sizes.size20),
-              bottomRight: Radius.circular(Sizes.size20),
-            ),
-            child: Slidable(
-              endActionPane: ActionPane(
-                motion: ScrollMotion(),
-                children: [
-                  SlidableAction(
-                    onPressed: (_) => _onWarningDelteGift(context, data),
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    icon: Icons.delete,
-                    label: '삭제하기',
-                  ),
-                  SlidableAction(
-                    onPressed: (_) => _onEditGift(context, data),
-                    backgroundColor: secondaryColor,
-                    foregroundColor: Colors.white,
-                    icon: Icons.edit,
-                    label: '수정하기',
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(Sizes.size20),
-                  bottomLeft: Radius.circular(Sizes.size20),
-                ),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    vertical: Sizes.size16,
-                    horizontal: Sizes.size16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                        blurRadius: 10,
-                        spreadRadius: 5,
-                      )
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      // 아이콘
-                      Container(
-                        width: Sizes.size48,
-                        height: Sizes.size48,
-                        decoration: BoxDecoration(
-                          color: meta!.bgColor,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          meta.emoji,
-                          style: TextStyle(fontSize: Sizes.size24),
-                        ),
-                      ),
-                      Gaps.h12,
-                      // 노트 및 날짜
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              data.note,
-                              style: TextStyle(
-                                fontSize: Sizes.size14,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                            Gaps.v4,
-                            Text(
-                              dateText,
-                              style: TextStyle(
-                                fontSize: Sizes.size12,
-                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // 금액
-                      Text(
-                        isReceived ? oneGiftAmount : oneGiftAmount,
-                        style: TextStyle(
-                          fontSize: Sizes.size16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.1,
-                          color: isReceived ? primaryColor : secondaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+    return TxnRow(
+      gift: gift,
+      onTap: () => _onEdit(context),
+      onMore: () => _onMore(context),
     );
   }
 }

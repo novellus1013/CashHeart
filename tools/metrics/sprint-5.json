@@ -1,0 +1,148 @@
+{
+  "sprint": 5,
+  "commits": [
+    {
+      "hash": "987ef0300a1f",
+      "timestamp": "2026-07-13T13:50:43+09:00",
+      "files_changed": 16,
+      "loc_added": 658,
+      "loc_deleted": 34,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "0fb7cfeb29d8",
+      "timestamp": "2026-07-13T13:50:57+09:00",
+      "files_changed": 1,
+      "loc_added": 18,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "bbf3f24b37d2",
+      "timestamp": "2026-07-13T13:51:10+09:00",
+      "files_changed": 1,
+      "loc_added": 13,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "eeff7f6bf536",
+      "timestamp": "2026-07-13T13:51:20+09:00",
+      "files_changed": 1,
+      "loc_added": 13,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "077f5312fe61",
+      "timestamp": "2026-07-16T22:54:56+09:00",
+      "files_changed": 2,
+      "loc_added": 14,
+      "loc_deleted": 1,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "aa2eb8274723",
+      "timestamp": "2026-07-19T19:38:04+09:00",
+      "files_changed": 4,
+      "loc_added": 61,
+      "loc_deleted": 81,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "c1515f0f043b",
+      "timestamp": "2026-07-19T19:38:16+09:00",
+      "files_changed": 1,
+      "loc_added": 13,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "2f33c766ab9e",
+      "timestamp": "2026-07-19T19:38:26+09:00",
+      "files_changed": 1,
+      "loc_added": 13,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "e47c2b12d34d",
+      "timestamp": "2026-07-19T19:40:40+09:00",
+      "files_changed": 1,
+      "loc_added": 1,
+      "loc_deleted": 1,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "68e383b31809",
+      "timestamp": "2026-07-19T20:24:26+09:00",
+      "files_changed": 6,
+      "loc_added": 75,
+      "loc_deleted": 55,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    },
+    {
+      "hash": "2912035fac8d",
+      "timestamp": "2026-07-19T20:24:39+09:00",
+      "files_changed": 1,
+      "loc_added": 13,
+      "loc_deleted": 0,
+      "analyze": {
+        "error": 0,
+        "warning": 0,
+        "info": 7
+      },
+      "llm_authored": true
+    }
+  ]
+}

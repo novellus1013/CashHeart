@@ -1,13 +1,16 @@
 import 'package:cash_heart/config/app_config.dart';
-import 'package:cash_heart/constants/colors.dart';
-import 'package:cash_heart/constants/sizes.dart';
 import 'package:cash_heart/providers/person_view_model.dart';
 import 'package:cash_heart/providers/theme_provider.dart';
 import 'package:cash_heart/repositories/person_repository.dart';
-import 'package:cash_heart/screens/home_screen.dart';
+import 'package:cash_heart/screens/main_shell_screen.dart';
 import 'package:cash_heart/services/mock_data_service.dart';
+import 'package:cash_heart/theme/app_colors.dart';
+import 'package:cash_heart/theme/app_theme.dart';
+import 'package:cash_heart/utils/root_messenger.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -26,11 +29,23 @@ void main() async {
   _themeProvider = await ThemeProvider.create();
 
   if (AppConfig.useSentry) {
+    const sentryDsn = String.fromEnvironment('SENTRY_DSN');
+    if (sentryDsn.isEmpty) {
+      // assert는 release에서 스트립되므로 사용하지 않음 - release에서도 남아야 하는 경고.
+      debugPrint(
+          '[CashHeart] SENTRY_DSN이 비어있습니다. flutter build 시 '
+          '--dart-define=SENTRY_DSN=<값> 옵션 없이 빌드되어 Sentry가 전송되지 않습니다.');
+    }
+
+    // release 문자열을 pubspec.yaml 버전에 하드코딩 고정해뒀던 게 매 버전 올릴
+    // 때마다 갱신을 잊기 쉬워 실제로도 밀려 있었다(2026-07-11 발견) — 설치된
+    // 버전을 직접 읽어 항상 최신 상태로 맞춘다.
+    final packageInfo = await PackageInfo.fromPlatform();
+
     // Production: Sentry 활성화
     await SentryFlutter.init(
       (options) {
-        options.dsn =
-            'https://8f01d649f395a7c25a20358d75df2d95@o4510417424285696.ingest.us.sentry.io/4510417425465344';
+        options.dsn = sentryDsn;
 
         options.sendDefaultPii = false;
         options.enableLogs = true;
@@ -39,7 +54,8 @@ void main() async {
         options.replay.sessionSampleRate = 0.0;
         options.replay.onErrorSampleRate = 0.0;
         options.environment = 'production';
-        options.release = 'CashHeart@1.0.0+1';
+        options.release =
+            'CashHeart@${packageInfo.version}+${packageInfo.buildNumber}';
       },
       appRunner: () => runApp(SentryWidget(child: const MyApp())),
     );
@@ -79,92 +95,33 @@ class MyApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
-            home: HomeScreen(),
+            scaffoldMessengerKey: rootScaffoldMessengerKey,
+            home: const MainShellScreen(),
             debugShowCheckedModeBanner: AppConfig.isDev,
             themeMode: themeProvider.themeMode,
-            theme: _buildLightTheme(),
-            darkTheme: _buildDarkTheme(),
+            theme: AppTheme.light(),
+            darkTheme: AppTheme.dark(),
+            // 시스템 네비게이션 바 색을 MainShellScreen 하나에만 지정하면 그
+            // 위로 push된 화면(person_detail 등)에선 적용되지 않는다(pushed
+            // route는 MainShellScreen의 위젯 트리 밖이라 AnnotatedRegion을
+            // 상속하지 않음) — builder로 감싸 모든 화면에 일괄 적용한다
+            // (2026-07-11 실기기 확인: 상세 화면에서 시스템 바가 다시 비쳐 보임).
+            builder: (context, child) {
+              final colors = Theme.of(context).extension<AppColors>()!;
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return AnnotatedRegion<SystemUiOverlayStyle>(
+                value: SystemUiOverlayStyle(
+                  systemNavigationBarColor: colors.bg,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                  systemNavigationBarIconBrightness:
+                      isDark ? Brightness.light : Brightness.dark,
+                ),
+                child: child!,
+              );
+            },
           );
         },
       ),
-    );
-  }
-
-  ThemeData _buildLightTheme() {
-    return ThemeData(
-      brightness: Brightness.light,
-      fontFamily: "pretendard",
-      scaffoldBackgroundColor: const Color(0xFFF8F6F5),
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: Brightness.light,
-      ),
-      appBarTheme: const AppBarTheme(
-        centerTitle: false,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: Color(0xFFF8F6F5),
-        elevation: 0,
-        titleTextStyle: TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: Sizes.size20,
-          color: Colors.black,
-        ),
-        iconTheme: IconThemeData(color: Colors.black),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(
-          fontSize: Sizes.size14,
-          color: Colors.grey,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-        ),
-      ),
-      cardColor: Colors.white,
-      dividerColor: Colors.grey.shade200,
-    );
-  }
-
-  ThemeData _buildDarkTheme() {
-    return ThemeData(
-      brightness: Brightness.dark,
-      fontFamily: "pretendard",
-      scaffoldBackgroundColor: const Color(0xFF1A1A1A),
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
-        brightness: Brightness.dark,
-      ),
-      appBarTheme: const AppBarTheme(
-        centerTitle: false,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        backgroundColor: Color(0xFF1A1A1A),
-        elevation: 0,
-        titleTextStyle: TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: Sizes.size20,
-          color: Colors.white,
-        ),
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        hintStyle: TextStyle(
-          fontSize: Sizes.size14,
-          color: Colors.grey.shade400,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-        ),
-      ),
-      cardColor: const Color(0xFF2A2A2A),
-      dividerColor: Colors.grey.shade800,
     );
   }
 }
