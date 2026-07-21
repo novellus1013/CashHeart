@@ -29,6 +29,17 @@ fi
 
 cd "${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}" || exit 0
 
+# P0 리스크(부록 C, 2026-05-30 발견): lib/main.dart의 AppConfig.setDev()가
+# 주석 해제된 채 커밋되면 prod 빌드가 Sentry OFF + Mock 데이터 ON 상태로 나간다.
+# 스테이지된 main.dart 기준으로 검사(작업 트리가 아니라 실제 커밋될 내용).
+if git diff --cached --name-only | grep -qx "lib/main.dart"; then
+  if git show :lib/main.dart 2>/dev/null | grep -qE '^[[:space:]]*AppConfig\.setDev\(\);'; then
+    echo "❌ lib/main.dart: AppConfig.setDev()가 활성 상태로 커밋 시도됨 — 커밋 차단" >&2
+    echo "→ prod 빌드에 Sentry 비활성 + Mock 데이터 생성이 그대로 들어갑니다. AppConfig.setProd()로 되돌리세요." >&2
+    exit 2
+  fi
+fi
+
 out="$("$FLUTTER" analyze --no-pub 2>&1 || true)"
 warn="$(printf '%s\n' "$out" | grep -cE '(warning|error) •' || true)"
 warn="${warn:-0}"
